@@ -1,6 +1,14 @@
+// Home.tsx
+"use client";
 import Link from "next/link";
 import { IconUsers, IconNews, IconDatabase } from "@tabler/icons-react";
+import { redirect } from "next/navigation";
+
 export default function Home() {
+  // Verificar autenticación
+  const isAuth = typeof window !== "undefined" && localStorage.getItem("auth") === "true";
+  if (!isAuth) redirect("/login");
+
   const cards = [
     {
       title: "Consultas",
@@ -23,35 +31,26 @@ export default function Home() {
   ];
 
   return (
-    <div className="hero min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="grid-separation mb-12">
-        <h1 className=" text-center text-5xl font-bold text-black mb-4">
+    <div className="bg-gray-50 min-h-screen p-6">
+      {/* Encabezado */}
+      <section className="mb-12 text-center">
+        <h1 className="text-4xl font-bold text-black mb-2">
           Bienvenido a SQL Interface
         </h1>
-        <p className="text-center text-xl text-gray-600 max-w-2xl mx-auto">
-          Gestiona consultas, usuarios y contenido desde un solo lugar, de forma rápida y segura.
+        <p className="text-gray-600 text-lg">
+          Gestiona consultas, usuarios y contenido desde un solo lugar.
         </p>
       </section>
 
-      {/* Cards Grid */}
+      {/* Cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {cards.map((card) => (
-          <Link key={card.href} href={card.href} className="block h-full">
-            <div
-              className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm
-        hover:shadow-lg hover:-translate-y-1 transition-all
-        cursor-pointer h-full"
-            >
+          <Link key={card.href} href={card.href} className="block">
+            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all">
               <div className="mb-4">{card.icon}</div>
-
-              <h2 className="text-2xl font-bold text-black mb-2">
-                {card.title}
-              </h2>
-
+              <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
               <p className="text-gray-600">{card.description}</p>
-
-              <div className="flex justify-end mt-4 font-semibold text-gray-700 hover:text-black">
+              <div className="flex justify-end mt-4 font-semibold text-blue-600">
                 Acceder →
               </div>
             </div>

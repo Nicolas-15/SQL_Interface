@@ -1,4 +1,7 @@
-import {IconEdit, IconTrash} from '@tabler/icons-react';
+// Usuarios.tsx
+"use client";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
+
 export default function Usuarios() {
   const users = [
     { id: 1, name: "Juan García", email: "juan@example.com", rol: "Admin", estado: "Activo" },
@@ -7,14 +10,17 @@ export default function Usuarios() {
   ];
 
   return (
-    <div>
-      <h1 className="titulo text-4xl font-bold mb-8">Usuarios</h1>
+    <div className="p-6">
+      {/* Título */}
+      <h1 className="text-4xl font-bold mb-6 text-black">Usuarios</h1>
 
-      <button className="boton+ mb-6 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition">
+      {/* Botón Nuevo Usuario */}
+      <button className="mb-6 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition hover:scale-105 active:scale-95">
         + Nuevo Usuario
       </button>
 
-      <div className="tablacmp bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Tabla */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -27,13 +33,13 @@ export default function Usuarios() {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="nom-email border-b border-gray-200 hover:bg-gray-50">
+              <tr key={user.id} className="border-b border-gray-200 hover:bg-gray-50">
                 <td className="px-6 py-3 text-black font-medium">{user.name}</td>
                 <td className="px-6 py-3 text-gray-600">{user.email}</td>
                 <td className="px-6 py-3 text-gray-600">{user.rol}</td>
                 <td className="px-6 py-3">
                   <span
-                    className={`status px-3 py-1 rounded text-sm font-medium ${
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
                       user.estado === "Activo"
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
@@ -42,9 +48,13 @@ export default function Usuarios() {
                     {user.estado}
                   </span>
                 </td>
-                <td className="edicion px-6 py-3">
-                  <button className="text-black hover:text-gray-600 mr-4"><IconEdit className="w-4 h-4" /></button>
-                  <button className="text-red-600 hover:text-red-800"><IconTrash className="w-4 h-4" /></button>
+                <td className="px-6 py-3 flex gap-4">
+                  <button className="text-black hover:text-gray-600">
+                    <IconEdit className="w-4 h-4" />
+                  </button>
+                  <button className="text-red-600 hover:text-red-800">
+                    <IconTrash className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}

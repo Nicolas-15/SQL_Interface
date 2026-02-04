@@ -1,3 +1,5 @@
+// Titulares.tsx
+"use client";
 import { IconEdit } from "@tabler/icons-react";
 
 export default function Titulares() {
@@ -7,10 +9,12 @@ export default function Titulares() {
   ];
 
   return (
-    <div>
-      <h1 className="titulo text-4xl font-bold mb-8">Titulares</h1>
+    <div className="p-6">
+      {/* Título */}
+      <h1 className="text-4xl font-bold mb-6 text-black">Titulares</h1>
 
-      <div className="tablacmp bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Tabla */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -26,8 +30,10 @@ export default function Titulares() {
                 <td className="px-6 py-3 text-black font-medium">{t.nombre}</td>
                 <td className="px-6 py-3 text-gray-600">{t.cargo}</td>
                 <td className="px-6 py-3 text-gray-600">{t.email}</td>
-                <td className="edicion px-6 py-3">
-                  <button className="text-black hover:text-gray-600"><IconEdit className="w-4 h-4" /></button>
+                <td className="px-6 py-3 flex gap-4">
+                  <button className="text-black hover:text-gray-600">
+                    <IconEdit className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}
