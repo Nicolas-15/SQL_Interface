@@ -13,8 +13,8 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full border-b border-gray-200 bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="w-full border-b border-gray-200 bg-white shadow-sm px-2 xl:px-0">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-black">

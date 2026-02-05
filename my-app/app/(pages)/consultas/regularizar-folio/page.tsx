@@ -1,4 +1,5 @@
-// RegularizacionFolioPage.tsx
+/* RegularizacionFolioPage.tsx Tiene una funcion que setea el formato del folio y valida que el folio tenga el formato correcto antes de
+ejecutar cada paso y nos muestra un mensaje de alerta en caso de que no sea correcto. y nos notifica el paso que se ejecuto para nuestro folio*/
 "use client";
 import { useState } from "react";
 
@@ -23,7 +24,7 @@ export default function RegularizacionFolioPage() {
   };
 
   return (
-    <div className="max-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="max-h-screen flex items-center justify-center py-6">
       <div className="w-full max-w-md">
         {/* Título */}
         <h1 className="text-4xl font-bold mb-2 text-center text-black">

@@ -1,4 +1,7 @@
-// Usuarios.tsx
+/* Usuarios.tsx Es nuestra pagina para gestionar a nuestros usuarios del sistema, contieme una tabla con sus datos y acciones para editar o eliminar.
+contiene un boton para agregar nuevos usuarios, aun sin funcionalidad, debemos hacer responsive la tabla ademas de no estatica.
+Ya que funciona como una lista de usuarios constante del sistema y esto tiene que estar conectado a una base de datos.
+*/
 "use client";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 
@@ -10,7 +13,7 @@ export default function Usuarios() {
   ];
 
   return (
-    <div className="p-6">
+    <div className="max-w-7xl mx-auto py-6">
       {/* Título */}
       <h1 className="text-4xl font-bold mb-6 text-black">Usuarios</h1>
 
