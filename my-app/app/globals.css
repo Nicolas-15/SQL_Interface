@@ -9,3 +9,8 @@
   --color-border: #E5E7EB;
   --color-on-accent: #FFFFFF;
 }
+
+html{
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}

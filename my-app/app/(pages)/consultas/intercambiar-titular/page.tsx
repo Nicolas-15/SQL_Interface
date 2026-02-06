@@ -1,4 +1,6 @@
-// IntercambiarTitularPage.tsx
+/* IntercambiarTitularPage.tsx nos permite intercambiar entre dos titulares (Tenemos 2 constantes "Alcalde" y "Administradora").
+al hacer click en el boton se actualiza el estado mostrando al otro titular. 
+*/
 "use client";
 import { useState } from "react";
 import { IconSwitch } from "@tabler/icons-react";
@@ -15,6 +17,7 @@ export default function IntercambiarTitularPage() {
   return (
     <div className="max-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-2xl">
+        
         {/* Título */}
         <h1 className="text-4xl font-bold mb-2 text-center text-black">
           Intercambiar Titular

@@ -1,4 +1,6 @@
-// Titulares.tsx
+/* Titulares.tsx Esta pagina contiene una tabla con los titulares del sistema, mostrando su cargo, nombre y email. Ademas de un boton para editar cada titular, aun sin funcionalidad.
+Debemos hacer que esta tabla sea responsive, Los titulares van a salir de la base de datos, pero siempre seran 2 los mismos titulares durante el mandato.
+*/
 "use client";
 import { IconEdit } from "@tabler/icons-react";
 
@@ -9,7 +11,7 @@ export default function Titulares() {
   ];
 
   return (
-    <div className="p-6">
+    <div className="max-w-7xl mx-auto py-6">
       {/* Título */}
       <h1 className="text-4xl font-bold mb-6 text-black">Titulares</h1>
 
