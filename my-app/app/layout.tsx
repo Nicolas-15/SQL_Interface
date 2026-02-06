@@ -3,6 +3,8 @@ import './globals.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import BackButton from './components/BackButton';
+import { ToastContainer} from 'react-toastify';
+import React from 'react';
 
 export const metadata: Metadata = {
   title: 'SQL Interface',
@@ -25,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         </main>
         <Footer />
+        <ToastContainer/>
       </body>
     </html>
   );

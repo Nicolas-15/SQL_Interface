@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { IconSwitch } from "@tabler/icons-react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type UsuarioTitular = {
   id: number;
@@ -31,10 +33,53 @@ export default function IntercambiarTitularPage() {
     },
   });
 
-  const handleIntercambiarTitulares = () => {
-    const confirmar = window.confirm(
-      "¿Desea intercambiar la titularidad del sistema?"
-    );
+  // 🔔 Toast de confirmación (Tailwind)
+  const confirmToast = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      toast(
+        ({ closeToast }) => (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm font-medium text-gray-800">
+              ¿Estás seguro de que quieres intercambiar la titularidad?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  resolve(false);
+                  closeToast();
+                }}
+                className="px-4 py-2 rounded-md border border-gray-300
+                           text-gray-700 hover:bg-gray-100 transition text-sm"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={() => {
+                  resolve(true);
+                  closeToast();
+                }}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white
+                           hover:bg-blue-700 transition text-sm"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        ),
+        {
+          autoClose: false,
+          closeOnClick: false,
+          draggable: false,
+          className: "rounded-lg shadow-lg",
+        }
+      );
+    });
+  };
+
+  const HandleIntercambiarTitulares = async () => {
+    const confirmar = await confirmToast();
 
     if (!confirmar) return;
 
@@ -85,14 +130,15 @@ export default function IntercambiarTitularPage() {
             }`}
           >
             {titulares.ADMINISTRADOR.esTitular
-              ? "Titular activo"  
+              ? "Titular activo"
               : "No titular"}
           </span>
         </div>
 
         <button
-          onClick={handleIntercambiarTitulares}
-          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700"
+          onClick={HandleIntercambiarTitulares}
+          className="flex items-center gap-2 bg-blue-600 text-white
+                     px-5 py-3 rounded-lg hover:bg-blue-700 transition"
         >
           <IconSwitch className="w-5 h-5" />
           Intercambiar titularidad
