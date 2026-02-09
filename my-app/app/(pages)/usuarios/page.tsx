@@ -11,9 +11,6 @@ type User = {
   estado: "Activo" | "Inactivo";
 };
 
-{/*Esta es la fuente de lo que se muestra en pantalla.
-  Tabla de usuarios de ejemplo con acciones de agregar, editar y eliminar.*/}
-
 export default function Usuarios() {
   const [users, setUsers] = useState<User[]>([
     {
@@ -39,86 +36,135 @@ export default function Usuarios() {
     },
   ]);
 
-  {/*Controlamos si la ventana flotante aparece sobre la pagina */}
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempUser, setTempUser] = useState<User | null>(null);
+  const [errors, setErrors] = useState({ name: "", email: "" });
+  const [isEditing, setIsEditing] = useState(false); // Para saber si estamos editando o creando
 
-  {/*Nos dice que usario estamos editando para rellenar los campos del formulario*/}
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // Capitaliza cada palabra del nombre
+  const capitalizeName = (name: string) =>
+    name.replace(/\b\w/g, (char) => char.toUpperCase());
 
-  /*ACCIONES*/
-  {/*Creamos un nuevo usuario */}
+  const handleNameChange = (name: string) => {
+    if (!tempUser) return;
+    name = capitalizeName(name).slice(0, 50); // Max length 50
+    setTempUser({ ...tempUser, name });
+
+    setErrors((prev) => ({
+      ...prev,
+      name:
+        !name || name.trim().length < 3
+          ? "Nombre debe tener al menos 3 caracteres"
+          : "",
+    }));
+  };
+
+  const handleEmailChange = (email: string) => {
+    if (!tempUser) return;
+    email = email.toLowerCase().slice(0, 50); // Max length 50
+    setTempUser({ ...tempUser, email });
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setErrors((prev) => ({
+      ...prev,
+      email: !email
+        ? "Email obligatorio"
+        : !emailRegex.test(email)
+          ? "Email inválido"
+          : "",
+    }));
+  };
+
   const handleAddUser = () => {
-    const newUser: User = {
+    setTempUser({
       id: Date.now(),
-      name: "Nuevo Usuario",
-      email: "nuevo@ejemplo.com",
+      name: "",
+      email: "",
       rol: "Viewer",
       estado: "Activo",
-    };
-
-    {/*Seteamos un array para los nuevo usuarios*/}
-    setUsers([...users, newUser]);
-  };
-  {/*Se abre el panel y cargamos los datos del usuario seleccionado preparando la edicion */}
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
+    });
+    setErrors({ name: "", email: "" });
+    setIsEditing(false);
     setIsModalOpen(true);
   };
-  {/*Guardamos los cambios realizados en el usuario seleccionado,
-    remplazando al usuario antiguo en la lista */}
-  const handleSaveUser = () => {
-    if (!selectedUser) return;
 
-    setUsers(
-      users.map((user) =>
-        user.id === selectedUser.id ? selectedUser : user
-      )
-    );
-    {/*Cerramos el panel y limpiamos el usuario seleccionado*/}
-    setIsModalOpen(false);
-    setSelectedUser(null);
+  const handleEditUser = (user: User) => {
+    setTempUser({ ...user });
+    setErrors({ name: "", email: "" });
+    setIsEditing(true);
+    setIsModalOpen(true);
   };
-  {/*Eliminamos el usuario seleccionado de la lista*/}
+
+  const handleSaveUser = () => {
+    if (!tempUser || errors.name || errors.email) return;
+
+    if (isEditing) {
+      // Editar usuario existente
+      setUsers(users.map((u) => (u.id === tempUser.id ? tempUser : u)));
+    } else {
+      // Crear nuevo usuario
+      setUsers([...users, tempUser]);
+    }
+
+    setTempUser(null);
+    setIsModalOpen(false);
+  };
+
   const handleDeleteUser = (id: number) => {
     if (!window.confirm("¿Eliminar este usuario?")) return;
-    {/*filter nos devuelve el array nuevo sin el usuario eliminado */}
-    setUsers(users.filter((user) => user.id !== id));
+    setUsers(users.filter((u) => u.id !== id));
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-6">
-      <h1 className="text-4xl font-bold mb-6 text-black">Usuarios</h1>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-black">
+        Usuarios
+      </h1>
+      <p className="text-gray-600 text-center mb-6">
+        Administración, modificación y eliminación de usuarios del sistema
+      </p>
 
-      {/*Boton para agregar usuarios*/}
-      <button
-        onClick={handleAddUser}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded mb-8"
-      >
-        + Nuevo Usuario
-      </button>
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={handleAddUser}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded w-full sm:w-auto text-center"
+        >
+          Agregar Nuevo Usuario
+        </button>
+      </div>
 
-      {/* TABLA */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto shadow-sm">
-        <table className="min-w-200 w-full">
+      <div className="overflow-x-auto w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+        <table className="min-w-full table-auto">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-black">Nombre</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-black">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-black">Rol</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-black">Estado</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-black">Acciones</th>
+              <th className="px-3 sm:px-6 py-2 text-left text-sm font-semibold text-black">
+                Nombre
+              </th>
+              <th className="px-3 sm:px-6 py-2 text-left text-sm font-semibold text-black">
+                Email
+              </th>
+              <th className="px-3 sm:px-6 py-2 text-left text-sm font-semibold text-black">
+                Rol
+              </th>
+              <th className="px-3 sm:px-6 py-2 text-left text-sm font-semibold text-black">
+                Estado
+              </th>
+              <th className="px-3 sm:px-6 py-2 text-left text-sm font-semibold text-black">
+                Acciones
+              </th>
             </tr>
           </thead>
-
           <tbody>
             {users.map((user) => (
               <tr key={user.id} className="border-b hover:bg-gray-50">
-                <td className="px-6 py-3 font-medium">{user.name}</td>
-                <td className="px-6 py-3 text-gray-600">{user.email}</td>
-                <td className="px-6 py-3 text-gray-600">{user.rol}</td>
-                <td className="px-6 py-3">
+                <td className="px-3 sm:px-6 py-2 font-medium">{user.name}</td>
+                <td className="px-3 sm:px-6 py-2 text-gray-600 wrap-break-words">
+                  {user.email}
+                </td>
+                <td className="px-3 sm:px-6 py-2 text-gray-600">{user.rol}</td>
+                <td className="px-3 sm:px-6 py-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm ${
+                    className={`px-2 py-1 rounded-full text-sm ${
                       user.estado === "Activo"
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
@@ -127,7 +173,7 @@ export default function Usuarios() {
                     {user.estado}
                   </span>
                 </td>
-                <td className="px-6 py-3 flex gap-4">
+                <td className="px-3 sm:px-6 py-2 flex gap-2 sm:gap-4">
                   <button
                     onClick={() => handleEditUser(user)}
                     className="text-black hover:text-gray-600"
@@ -147,9 +193,8 @@ export default function Usuarios() {
         </table>
       </div>
 
-      {/* MODAL */}
-      {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      {isModalOpen && tempUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md p-6 relative">
             <button
               onClick={() => setIsModalOpen(false)}
@@ -158,32 +203,46 @@ export default function Usuarios() {
               <IconX />
             </button>
 
-            <h2 className="text-xl font-bold mb-4">Editar Usuario</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
+            </h2>
 
             <div className="space-y-3">
               <input
-                className="w-full border rounded-lg px-3 py-2"
-                value={selectedUser.name}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, name: e.target.value })
-                }
+                id="user-name"
+                name="name"
+                maxLength={50}
+                autoComplete="off"
+                className={`w-full border rounded-lg px-3 py-2 ${errors.name ? "border-red-500" : ""}`}
+                value={tempUser.name || ""}
+                onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="Nombre"
               />
+              <p className="text-red-600 text-sm min-h-5">
+                {errors.name || "\u00A0"}
+              </p>
 
               <input
-                className="w-full border rounded-lg px-3 py-2"
-                value={selectedUser.email}
-                onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
-                }
+                id="user-email"
+                name="email"
+                autoComplete="off"
+                maxLength={50}
+                className={`w-full border rounded-lg px-3 py-2 ${errors.email ? "border-red-500" : ""}`}
+                value={tempUser.email || ""}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 placeholder="Email"
               />
+              <p className="text-red-600 text-sm min-h-5">
+                {errors.email || "\u00A0"}
+              </p>
 
               <select
+                id="user-rol"
+                name="rol"
                 className="w-full border rounded-lg px-3 py-2"
-                value={selectedUser.rol}
+                value={tempUser.rol || "Viewer"}
                 onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, rol: e.target.value })
+                  setTempUser({ ...tempUser, rol: e.target.value })
                 }
               >
                 <option>Admin</option>
@@ -192,11 +251,13 @@ export default function Usuarios() {
               </select>
 
               <select
+                id="user-estado"
+                name="estado"
                 className="w-full border rounded-lg px-3 py-2"
-                value={selectedUser.estado}
+                value={tempUser.estado || "Activo"}
                 onChange={(e) =>
-                  setSelectedUser({
-                    ...selectedUser,
+                  setTempUser({
+                    ...tempUser,
                     estado: e.target.value as "Activo" | "Inactivo",
                   })
                 }
@@ -206,16 +267,22 @@ export default function Usuarios() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 border rounded-lg"
+                className="px-4 py-2 border rounded-lg w-full sm:w-auto"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveUser}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 w-full sm:w-auto"
+                disabled={
+                  !!errors.name ||
+                  !!errors.email ||
+                  !tempUser.name ||
+                  !tempUser.email
+                }
               >
                 Guardar cambios
               </button>

@@ -22,7 +22,7 @@ export default function IntercambiarTitularPage() {
     ALCALDE: {
       id: 1,
       nombre: "José Jofré Bustos",
-      email: "José.jofré@municipio.cl",
+      email: "jose.jofre@municipio.cl",
       esTitular: true,
     },
     ADMINISTRADOR: {
@@ -33,7 +33,6 @@ export default function IntercambiarTitularPage() {
     },
   });
 
-  // 🔔 Toast de confirmación (Tailwind)
   const confirmToast = (): Promise<boolean> => {
     return new Promise((resolve) => {
       toast(
@@ -78,7 +77,7 @@ export default function IntercambiarTitularPage() {
     });
   };
 
-  const HandleIntercambiarTitulares = async () => {
+  const handleIntercambiarTitulares = async () => {
     const confirmar = await confirmToast();
 
     if (!confirmar) return;
@@ -90,34 +89,38 @@ export default function IntercambiarTitularPage() {
         esTitular: !prev.ADMINISTRADOR.esTitular,
       },
     }));
+
+    toast.success("Titularidad intercambiada correctamente", {
+      position: "bottom-right",
+    });
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-8 text-black">
+    <div className="max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto py-8 px-4">
+      <h1 className="text-4xl font-bold mb-8 text-black text-center">
         Intercambiar Titular Decreto Pago Web
       </h1>
+      <p className="text-gray-600 text-lg mb-8 text-center">
+        Permite intercambiar la titularidad activa del sistema
+      </p>
 
-      <div className="bg-white border rounded-lg p-6 space-y-6">
-        <div>
+      {/* CONTENEDOR DE TARJETAS */}
+      <div className="bg-white border rounded-lg p-6 space-y-6 md:flex md:space-x-6 md:space-y-0">
+        {/* ALCALDE */}
+        <div className="flex-1">
           <p className="text-sm text-gray-500">Alcalde/sa</p>
-          <p className="text-lg font-semibold">
-            {titulares.ALCALDE.nombre}
-          </p>
+          <p className="text-lg font-semibold">{titulares.ALCALDE.nombre}</p>
           <span
             className={`text-sm font-medium ${
-              titulares.ALCALDE.esTitular
-                ? "text-green-600"
-                : "text-gray-400"
+              titulares.ALCALDE.esTitular ? "text-green-600" : "text-gray-400"
             }`}
           >
-            {titulares.ALCALDE.esTitular
-              ? "Titular activo"
-              : "No titular"}
+            {titulares.ALCALDE.esTitular ? "Titular activo" : "No titular"}
           </span>
         </div>
 
-        <div>
+        {/* ADMINISTRADOR */}
+        <div className="flex-1">
           <p className="text-sm text-gray-500">Administrador/a</p>
           <p className="text-lg font-semibold">
             {titulares.ADMINISTRADOR.nombre}
@@ -129,16 +132,16 @@ export default function IntercambiarTitularPage() {
                 : "text-gray-400"
             }`}
           >
-            {titulares.ADMINISTRADOR.esTitular
-              ? "Titular activo"
-              : "No titular"}
+            {titulares.ADMINISTRADOR.esTitular ? "Titular activo" : "No titular"}
           </span>
         </div>
+      </div>
 
+      {/* BOTÓN */}
+      <div className="flex justify-center mt-6">
         <button
-          onClick={HandleIntercambiarTitulares}
-          className="flex items-center gap-2 bg-blue-600 text-white
-                     px-5 py-3 rounded-lg hover:bg-blue-700 transition"
+          onClick={handleIntercambiarTitulares}
+          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition"
         >
           <IconSwitch className="w-5 h-5" />
           Intercambiar titularidad

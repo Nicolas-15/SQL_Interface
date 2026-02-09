@@ -15,13 +15,13 @@ export default function Home() {
   const cards = [
     {
       title: "Módulo de Gestión y Control Presupuestario",
-      description: "Unidad central para la supervisión de flujos financieron municipales, cumplimiento de ley de transparencia y regularizacion de registros administrativos.", 
+      description: "Unidad central para la supervisión de flujos financieros municipales, cumplimiento de la Ley de Transparencia y regularización de registros administrativos.", 
       href: "/consultas",
       icon: <IconDatabase className="w-8 h-8 text-blue-500" />,
     },
     {
       title: "Control de Usuarios",
-      description: "Unidad centralizada para el control de identidades. Administre credenciales, asignar roles jerarquicos y supervise el estado de actividad de los funcionarios.",
+      description: "Unidad centralizada para el control de identidades. Permite administrar credenciales, asignar roles jerárquicos y supervisar el estado de actividad de los funcionarios.",
       href: "/usuarios",
       icon: <IconUsers className="w-8 h-8 text-green-500" />,
     },
@@ -41,7 +41,7 @@ export default function Home() {
           Bienvenido a SQL Interface
         </h1>
         <p className="text-gray-600 text-lg">
-          Plataforma centralizada para la gestión de información municipal, usuarios y titulares autorizados.
+         Plataforma centralizada para la gestión de información municipal, gestión de usuarios y titulares autorizados.
         </p>
       </section>
 

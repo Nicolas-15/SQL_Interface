@@ -27,7 +27,7 @@ export default function RegularizacionFolioPage() {
     <div className="max-h-screen flex items-center justify-center py-6">
       <div className="w-full max-w-md">
         {/* Título */}
-        <h1 className="text-4xl font-bold mb-2 text-center text-black">
+        <h1 className="text-4xl font-bold mb-8 text-black text-center">
           Regularizar por Folio
         </h1>
         <p className="text-gray-600 text-lg mb-8 text-center">
@@ -38,14 +38,17 @@ export default function RegularizacionFolioPage() {
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all">
           {/* Input de folio */}
           <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2">
+            <label htmlFor="folio" className="block text-gray-700 font-medium mb-2">
               Folio (Ej: FOL-2025-001)
             </label>
             <input
+              id="folio"
+              name="folio"
               type="text"
               value={folio}
               onChange={(e) => setFolio(e.target.value.toUpperCase())}
               placeholder="FOL-2025-001"
+              autoComplete="off"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

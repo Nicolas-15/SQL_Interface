@@ -50,10 +50,13 @@ export default function LoginPage() {
               <div className="relative">
                 <IconAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   placeholder="Correo institucional"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="current-password"
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300
                    focus:border-blue-600 focus:ring-2 focus:ring-blue-100
                    focus:outline-none transition"
@@ -63,6 +66,8 @@ export default function LoginPage() {
               <div className="relative">
                 <IconKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
+                  id="password"
+                  name="password"
                   type="password"
                   placeholder="Contraseña"
                   value={password}
