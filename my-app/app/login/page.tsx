@@ -1,29 +1,29 @@
-/* LoginPage.tsx Esta pagina contiene una funcion para verificar que el login del usuario sea correcto, nos da una validacion de que se debe
-ingresar correo y contraseña, la validacion es basica y no se conecta a ningun backend.
-Ademas contiene el diseño de la pagina de login con un fondo y un formulario centrado en la pantalla.
-*/
 "use client";
+
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { IconAt, IconKey } from "@tabler/icons-react";
+import { loginAction } from "../lib/action/auth/login.action";
+
+interface LoginState {
+  success: boolean;
+  message?: string;
+}
+
+const initialState: LoginState = {
+  success: false,
+};
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const [state, formAction] = useActionState(loginAction, initialState);
 
-    if (!email || !password) {
-      setError("Debe ingresar correo y contraseña");
-      return;
+  useEffect(() => {
+    if (state.success) {
+      router.push("/");
     }
-    setError("");
-    localStorage.setItem("auth", "true");
-    router.push("/");
-  };
+  }, [state.success, router]);
 
   return (
     <section className="w-full max-w-lg py-10 md:py-15 lg:py-20 mx-auto">
@@ -37,7 +37,7 @@ export default function LoginPage() {
           />
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 md:p-10">
+          <form action={formAction} className="p-6 sm:p-8 md:p-10">
             <h1 className="text-2xl font-bold mb-2 text-center text-gray-900">
               Bienvenido a SQL Interface
             </h1>
@@ -47,50 +47,44 @@ export default function LoginPage() {
             </p>
 
             <div className="flex flex-col gap-4">
+              {/* Identificador */}
               <div className="relative">
                 <IconAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Correo institucional"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="current-password"
+                  name="identificador"
+                  placeholder="Correo o usuario"
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300
-                   focus:border-blue-600 focus:ring-2 focus:ring-blue-100
-                   focus:outline-none transition"
+                  focus:border-blue-600 focus:ring-2 focus:ring-blue-100
+                  focus:outline-none transition"
                 />
               </div>
 
+              {/* Password */}
               <div className="relative">
                 <IconKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  id="password"
                   name="password"
                   type="password"
                   placeholder="Contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300
-                   focus:border-blue-600 focus:ring-2 focus:ring-blue-100
-                   focus:outline-none transition"
+                  focus:border-blue-600 focus:ring-2 focus:ring-blue-100
+                  focus:outline-none transition"
                 />
               </div>
-              {/* MENSAJE DE ERROR */}
+
+              {/* Error backend */}
               <div className="min-h-5">
-                <p
-                  className={`text-sm font-medium transition-opacity
-      ${error ? "text-red-600 opacity-100" : "opacity-0"}`}
-                >
-                  {error || ""}
-                </p>
+                {state.message && (
+                  <p className="text-sm font-medium text-red-600">
+                    {state.message}
+                  </p>
+                )}
               </div>
 
               <button
                 type="submit"
                 className="w-full bg-[#1e504f] hover:bg-[#1e504f]/90
-                 text-white py-3 rounded-lg font-semibold transition"
+                text-white py-3 rounded-lg font-semibold transition"
               >
                 Ingresar
               </button>
