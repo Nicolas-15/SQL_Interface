@@ -1,33 +1,37 @@
-/* Home.tsx Es nuestra pagina principal, contiene enlaces a las otras 3 secciones. Tiene una funcion que verifica si el usuario esta autenticado,
-gracias a que guardamos un item "auth" en el localStorage al momento de hacer login. Si no esta autenticado, redirige a la pagina de login.
-Contiene 3 cards que enlazan a las otras paginas: Consultas, Usuarios y Titulares. Ademas de sus botones y encabezado de recibimiento.
-*/
-"use client";
+// app/home/page.tsx
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { IconUsers, IconNews, IconDatabase } from "@tabler/icons-react";
-import { redirect } from "next/navigation";
 
-export default function Home() {
-  // Verificar autenticación
-  const isAuth = typeof window !== "undefined" && localStorage.getItem("auth") === "true";
-  if (!isAuth) redirect("/login");
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+
+  // Si no hay token → redirigir al login
+  if (!token) {
+    redirect("/login");
+  }
 
   const cards = [
     {
       title: "Módulo de Gestión y Control Presupuestario",
-      description: "Unidad central para la supervisión de flujos financieros municipales, cumplimiento de la Ley de Transparencia y regularización de registros administrativos.", 
+      description:
+        "Unidad central para la supervisión de flujos financieros municipales, cumplimiento de la Ley de Transparencia y regularización de registros administrativos.",
       href: "/consultas",
       icon: <IconDatabase className="w-8 h-8 text-blue-500" />,
     },
     {
       title: "Control de Usuarios",
-      description: "Unidad centralizada para el control de identidades. Permite administrar credenciales, asignar roles jerárquicos y supervisar el estado de actividad de los funcionarios.",
+      description:
+        "Unidad centralizada para el control de identidades. Permite administrar credenciales, asignar roles jerárquicos y supervisar el estado de actividad de los funcionarios.",
       href: "/usuarios",
       icon: <IconUsers className="w-8 h-8 text-green-500" />,
     },
     {
       title: "Gestión de Titulares Autorizados",
-      description: "Unidad de gestión y modificación de titulares autorizados para la firma de Decretos de Pago Web y otros documentos oficiales.",
+      description:
+        "Unidad de gestión y modificación de titulares autorizados para la firma de Decretos de Pago Web y otros documentos oficiales.",
       href: "/titulares",
       icon: <IconNews className="w-8 h-8 text-yellow-500" />,
     },
@@ -41,7 +45,8 @@ export default function Home() {
           Bienvenido a SQL Interface
         </h1>
         <p className="text-gray-600 text-lg">
-         Plataforma centralizada para la gestión de información municipal, gestión de usuarios y titulares autorizados.
+          Plataforma centralizada para la gestión de información municipal,
+          gestión de usuarios y titulares autorizados.
         </p>
       </section>
 
