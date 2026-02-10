@@ -31,7 +31,7 @@ export async function connectToDB(): Promise<sql.ConnectionPool | null> {
       } catch (reconnectError) {
         console.warn(
           "Failed to reconnect to existing pool, creating a new one:",
-          reconnectError
+          reconnectError,
         );
         pool = null;
       }
