@@ -3,119 +3,100 @@ import { connectToDB } from "../lib/utils/db-connection";
 
 export interface TitularDB {
   id_titular: string;
-  id_usuario: string;
+  nombre: string;
+  rut: string;
   id_rol: string;
 }
 
 export interface CrearTitularDB {
-  id_usuario: string;
+  nombre: string;
+  rut: string;
   id_rol: string;
 }
 
 export class TitularRepository {
+  async findAll(): Promise<TitularDB[]> {
+    const pool = await connectToDB();
+    if (!pool) return [];
 
-  /* =========================
-     Obtener titular activo por rol
-  ========================== */
-  async findTitularByRol(idRol: string): Promise<TitularDB | null> {
+    const result = await pool.request().query(`
+      SELECT t.id_titular, t.nombre, t.rut, r.id_rol
+      FROM titular t
+      JOIN rol r ON r.id_rol = t.id_rol
+    `);
+
+    return result.recordset;
+  }
+
+  async findTitularByRol(id_rol: string): Promise<TitularDB | null> {
     const pool = await connectToDB();
     if (!pool) return null;
 
-    const result = await pool.request()
-      .input("idRol", sql.UniqueIdentifier, idRol)
-      .query(`
-        SELECT TOP 1
-          id_titular,
-          id_usuario,
-          id_rol
-        FROM titular
-        WHERE id_rol = @idRol
+    const result = await pool
+      .request()
+      .input("idRol", sql.UniqueIdentifier, id_rol).query(`
+        SELECT t.id_titular, t.nombre, t.rut, r.id_rol
+        FROM titular t
+        JOIN rol r ON r.id_rol = t.id_rol
+        WHERE t.id_rol = @idRol
       `);
 
-    return result.recordset[0] ?? null;
+    return result.recordset[0] || null;
   }
 
-  /* =========================
-     Crear nuevo titular
-  ========================== */
   async createTitular(data: CrearTitularDB): Promise<TitularDB> {
     const pool = await connectToDB();
-    if (!pool) {
-      throw new Error("No se pudo conectar a la base de datos");
-    }
+    if (!pool) throw new Error("No se pudo conectar a la DB");
 
-    const result = await pool.request()
-      .input("idUsuario", sql.UniqueIdentifier, data.id_usuario)
-      .input("idRol", sql.UniqueIdentifier, data.id_rol)
-      .query(`
-        INSERT INTO titular (id_usuario, id_rol)
-        OUTPUT
-          INSERTED.id_titular,
-          INSERTED.id_usuario,
-          INSERTED.id_rol
-        VALUES (@idUsuario, @idRol)
+    const result = await pool
+      .request()
+      .input("nombre", sql.VarChar, data.nombre)
+      .input("rut", sql.VarChar, data.rut)
+      .input("idRol", sql.UniqueIdentifier, data.id_rol).query(`
+        INSERT INTO titular (nombre, rut, id_rol)
+        OUTPUT INSERTED.id_titular, INSERTED.nombre, INSERTED.rut, INSERTED.id_rol
+        VALUES (@nombre, @rut, @idRol)
       `);
 
     return result.recordset[0];
   }
 
-  /* =========================
-     Eliminar titular por rol
-     (para reemplazo)
-  ========================== */
-  async deleteByRol(idRol: string): Promise<void> {
-    const pool = await connectToDB();
-    if (!pool) return;
-
-    await pool.request()
-      .input("idRol", sql.UniqueIdentifier, idRol)
-      .query(`
-        DELETE FROM titular
-        WHERE id_rol = @idRol
-      `);
-  }
-
-  /* =========================
-     Cambiar titular (atómico)
-  ========================== */
   async changeTitular(data: CrearTitularDB): Promise<TitularDB> {
     const pool = await connectToDB();
-    if (!pool) {
-      throw new Error("No se pudo conectar a la base de datos");
-    }
+    if (!pool) throw new Error("No se pudo conectar a la DB");
 
     const transaction = new sql.Transaction(pool);
-
     try {
       await transaction.begin();
 
-      // 1️⃣ Eliminar titular actual del rol
       await new sql.Request(transaction)
         .input("idRol", sql.UniqueIdentifier, data.id_rol)
-        .query(`
-          DELETE FROM titular
-          WHERE id_rol = @idRol
-        `);
+        .query(`DELETE FROM titular WHERE id_rol = @idRol`);
 
-      // 2️⃣ Crear nuevo titular
       const result = await new sql.Request(transaction)
-        .input("idUsuario", sql.UniqueIdentifier, data.id_usuario)
-        .input("idRol", sql.UniqueIdentifier, data.id_rol)
-        .query(`
-          INSERT INTO titular (id_usuario, id_rol)
-          OUTPUT
-            INSERTED.id_titular,
-            INSERTED.id_usuario,
-            INSERTED.id_rol
-          VALUES (@idUsuario, @idRol)
+        .input("nombre", sql.VarChar, data.nombre)
+        .input("rut", sql.VarChar, data.rut)
+        .input("idRol", sql.UniqueIdentifier, data.id_rol).query(`
+          INSERT INTO titular (nombre, rut, id_rol)
+          OUTPUT INSERTED.id_titular, INSERTED.nombre, INSERTED.rut, INSERTED.id_rol
+          VALUES (@nombre, @rut, @idRol)
         `);
 
       await transaction.commit();
-
       return result.recordset[0];
-    } catch (error) {
+    } catch (err) {
       await transaction.rollback();
-      throw error;
+      throw err;
     }
+  }
+
+  async deleteByRol(id_rol: string): Promise<void> {
+    const pool = await connectToDB();
+    if (!pool) throw new Error("No se pudo conectar a la DB");
+
+    await pool
+      .request()
+      .input("idRol", sql.UniqueIdentifier, id_rol)
+      .query(`DELETE FROM titular WHERE id_rol = @idRol`);
   }
 }

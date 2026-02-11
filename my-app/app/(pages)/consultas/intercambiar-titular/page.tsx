@@ -41,26 +41,22 @@ export default function IntercambiarTitularPage() {
             <p className="text-sm font-medium text-gray-800">
               ¿Estás seguro de que quieres intercambiar la titularidad?
             </p>
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
                   resolve(false);
                   closeToast();
                 }}
-                className="px-4 py-2 rounded-md border border-gray-300
-                           text-gray-700 hover:bg-gray-100 transition text-sm"
+                className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm"
               >
                 Cancelar
               </button>
-
               <button
                 onClick={() => {
                   resolve(true);
                   closeToast();
                 }}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white
-                           hover:bg-blue-700 transition text-sm"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition text-sm"
               >
                 Confirmar
               </button>
@@ -72,14 +68,13 @@ export default function IntercambiarTitularPage() {
           closeOnClick: false,
           draggable: false,
           className: "rounded-lg shadow-lg",
-        }
+        },
       );
     });
   };
 
   const handleIntercambiarTitulares = async () => {
     const confirmar = await confirmToast();
-
     if (!confirmar) return;
 
     setTitulares((prev) => ({
@@ -96,48 +91,51 @@ export default function IntercambiarTitularPage() {
   };
 
   return (
-    <div className="max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-4xl font-bold mb-8 text-black text-center">
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-2 text-black">
         Intercambiar Titular Decreto Pago Web
       </h1>
-      <p className="text-gray-600 text-lg mb-8 text-center">
-        Permite intercambiar la titularidad activa del sistema
+      <p className="text-center text-gray-600 mb-6">
+        Permite intercambiar la titularidad activa del sistema entre los roles
+        disponibles.
       </p>
 
-      {/* CONTENEDOR DE TARJETAS */}
-      <div className="bg-white border rounded-lg p-6 space-y-6 md:flex md:space-x-6 md:space-y-0">
-        {/* ALCALDE */}
-        <div className="flex-1">
-          <p className="text-sm text-gray-500">Alcalde/sa</p>
-          <p className="text-lg font-semibold">{titulares.ALCALDE.nombre}</p>
-          <span
-            className={`text-sm font-medium ${
-              titulares.ALCALDE.esTitular ? "text-green-600" : "text-gray-400"
-            }`}
-          >
-            {titulares.ALCALDE.esTitular ? "Titular activo" : "No titular"}
-          </span>
-        </div>
-
-        {/* ADMINISTRADOR */}
-        <div className="flex-1">
-          <p className="text-sm text-gray-500">Administrador/a</p>
-          <p className="text-lg font-semibold">
-            {titulares.ADMINISTRADOR.nombre}
-          </p>
-          <span
-            className={`text-sm font-medium ${
-              titulares.ADMINISTRADOR.esTitular
-                ? "text-green-600"
-                : "text-gray-400"
-            }`}
-          >
-            {titulares.ADMINISTRADOR.esTitular ? "Titular activo" : "No titular"}
-          </span>
-        </div>
+      {/* TABLA DE ROLES */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border border-gray-300 p-2">Rol</th>
+              <th className="border border-gray-300 p-2">Nombre</th>
+              <th className="border border-gray-300 p-2">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="text-center">
+              <td className="border border-gray-300 p-2">Alcalde/sa</td>
+              <td className="border border-gray-300 p-2">
+                {titulares.ALCALDE.nombre}
+              </td>
+              <td className="border border-gray-300 p-2">
+                {titulares.ALCALDE.esTitular ? "Titular activo" : "No titular"}
+              </td>
+            </tr>
+            <tr className="text-center">
+              <td className="border border-gray-300 p-2">Administrador/a</td>
+              <td className="border border-gray-300 p-2">
+                {titulares.ADMINISTRADOR.nombre}
+              </td>
+              <td className="border border-gray-300 p-2">
+                {titulares.ADMINISTRADOR.esTitular
+                  ? "Titular activo"
+                  : "No titular"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      {/* BOTÓN */}
+      {/* BOTÓN DE INTERCAMBIO */}
       <div className="flex justify-center mt-6">
         <button
           onClick={handleIntercambiarTitulares}

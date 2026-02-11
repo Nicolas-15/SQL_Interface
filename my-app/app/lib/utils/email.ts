@@ -19,7 +19,7 @@ const CONTACT_EMAIL = process.env.EMAIL_FROM;
 const COLORS = {
   primary: "#2e40fd",
   text: "#1d2674",
-  background: "#f8fafc", // Lighter, cleaner background
+  background: "#f8fafc",
   secondary: "#1e2ab0",
   accent: "#98baff",
   white: "#ffffff",
@@ -87,7 +87,7 @@ export const sendRequestConfirmation = async (
   name: string,
   requestTitle: string,
   isAnonymous: boolean,
-  publicId?: string | null
+  publicId?: string | null,
 ) => {
   const title = "Solicitud Recibida";
   let content = `
@@ -104,7 +104,7 @@ export const sendRequestConfirmation = async (
       </div>
     `;
   } else if (publicId) {
-     content += `
+    content += `
       <div style="margin: 25px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid ${COLORS.accent}; border-radius: 4px;">
         <p style="margin: 0; font-size: 0.9em; color: ${COLORS.textMuted}; text-transform: uppercase; font-weight: 600;">Folio de Solicitud</p>
         <p style="margin: 5px 0 0; font-size: 22px; font-weight: bold; color: ${COLORS.text};">${publicId}</p>
@@ -136,7 +136,7 @@ export const sendRequestAssigned = async (
   email: string,
   name: string,
   requestTitle: string,
-  requestId: string
+  requestId: string,
 ) => {
   const title = "Nueva Asignación";
   const content = `
@@ -181,14 +181,14 @@ export const sendRequestAnswered = async (
   name: string,
   requestTitle: string,
   requestId: string,
-  responseSnippet?: string
+  responseSnippet?: string,
 ) => {
   const title = "Respuesta a tu Solicitud";
   let content = `
     <p>Hola <strong>${name || "Vecino/a"}</strong>,</p>
     <p>Tu solicitud <strong>"${requestTitle}"</strong> (Folio: ${requestId}) ha sido revisada y respondida.</p>
   `;
-  
+
   if (responseSnippet) {
     content += `
       <div style="background-color: #f0f9ff; border-left: 4px solid ${COLORS.primary}; padding: 20px; margin: 25px 0; border-radius: 4px;">
@@ -223,7 +223,7 @@ export const sendUserRoleUpdated = async (
   email: string,
   name: string,
   role: string,
-  area: string
+  area: string,
 ) => {
   const title = "Actualización de Cuenta";
   const content = `
@@ -261,10 +261,7 @@ export const sendUserRoleUpdated = async (
 /**
  * 6. Notificar remoción de acceso (Soft Delete)
  */
-export const sendUserRoleRemoved = async (
-  email: string,
-  name: string
-) => {
+export const sendUserRoleRemoved = async (email: string, name: string) => {
   const title = "Acceso Revocado";
   const content = `
     <p>Hola <strong>${name}</strong>,</p>
@@ -290,7 +287,7 @@ export const sendUserRoleAssignment = async (
   email: string,
   name: string,
   role: string,
-  area: string
+  area: string,
 ) => {
   const title = "Bienvenido al Sistema de Trámites";
   const content = `
@@ -325,7 +322,6 @@ export const sendUserRoleAssignment = async (
     html: getEmailTemplate(title, content),
   };
   return transporter.sendMail(message);
-
 };
 
 /**
@@ -336,7 +332,7 @@ export const sendRequestFinalizedWithChannel = async (
   name: string,
   requestTitle: string,
   requestId: string,
-  channel: string
+  channel: string,
 ) => {
   const title = "Solicitud Finalizada";
   let content = `

@@ -1,11 +1,13 @@
 import { connectToDB } from "@/app/lib/utils/db-connection";
 import UsuariosClient, { User } from "./usuariosClient";
 
+export const dynamic = "force-dynamic";
+
 type DBUser = {
   id_usuario: string;
   nombre: string;
   email: string;
-  activo: number;
+  activo: boolean | number;
   id_rol: string;
 };
 
@@ -26,7 +28,8 @@ export async function getUsers(): Promise<User[]> {
     name: u.nombre,
     email: u.email,
     rol: roleMap[u.id_rol] || "Viewer",
-    estado: u.activo === 1 ? "Activo" : "Inactivo",
+
+    estado: Boolean(u.activo) ? "Activo" : "Inactivo",
   }));
 }
 
