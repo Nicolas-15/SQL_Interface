@@ -18,7 +18,7 @@ export default function LoginForm() {
 
   // Cuando loginAction devuelve success:true, redirige al dashboard
   if (state.success) {
-    router.replace("/home"); // reemplaza la página actual y evita volver atrás
+    router.replace("/home");
   }
 
   return (

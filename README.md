@@ -2,7 +2,7 @@
 
 ## 📌 Descripción General
 
-**SQL Interface** es un proyecto de título orientado al desarrollo de una **interfaz web moderna** para la gestión y visualización de datos almacenados en bases de datos SQL. El sistema busca simplificar la interacción con la base de datos mediante una aplicación web intuitiva, permitiendo consultar, administrar y visualizar información sin necesidad de conocimientos avanzados en SQL.
+**SQL Interface** es un proyecto de practica orientado al desarrollo de una **interfaz web moderna** para la gestión y visualización de datos almacenados en bases de datos SQL. El sistema busca simplificar la interacción con la base de datos mediante una aplicación web intuitiva, permitiendo consultar, administrar y visualizar información sin necesidad de conocimientos avanzados en SQL.
 
 El proyecto está enfocado en buenas prácticas de desarrollo, separación de responsabilidades y una experiencia de usuario clara, utilizando tecnologías actuales del ecosistema web.
 

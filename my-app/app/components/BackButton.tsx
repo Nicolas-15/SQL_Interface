@@ -1,4 +1,3 @@
-// BackButton.tsx
 "use client";
 import { useRouter, usePathname } from "next/navigation";
 import { IconArrowLeft } from "@tabler/icons-react";
@@ -7,23 +6,22 @@ export default function BackButton() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // No mostrar en home ni login
   if (pathname === "/" || pathname === "/login") return null;
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
-      router.back(); // Usa historial del navegador
+      router.back();
     } else {
-      router.push("/"); // Si no hay historial, va a home
+      router.push("/");
     }
   };
 
   return (
     <button
       onClick={handleGoBack}
-      className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-600 text-black rounded-lg hover:text-blue-600 transition"
+      className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
     >
-      <IconArrowLeft className="w-5 h-5" />
+      <IconArrowLeft className="w-4 h-4" />
       Volver
     </button>
   );

@@ -5,7 +5,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import BackButton from "./components/BackButton";
 import React from "react";
-import { ToastContainer} from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
   title: "SQL Interface",
@@ -32,12 +32,12 @@ export default function RootLayout({
         <Footer />
 
         <ToastContainer
-          position="top-center"
+          position="bottom-right"
           newestOnTop
           closeOnClick={false}
           draggable={false}
           pauseOnFocusLoss={false}
-          style={{marginTop: "4rem"}}
+          style={{ marginTop: "4rem" }}
         />
       </body>
     </html>

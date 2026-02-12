@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { logoutAction } from "@/app/lib/action/auth/logout.action";
+import { IconLogout } from "@tabler/icons-react";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -14,9 +15,10 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-2 bg-white border border-blue-600 rounded-lg hover:text-blue-600 transition"
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition"
     >
-      Logout
+      <IconLogout className="w-4 h-4" />
+      Cerrar sesión
     </button>
   );
 }

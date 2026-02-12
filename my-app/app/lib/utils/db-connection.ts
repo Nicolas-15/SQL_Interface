@@ -1,9 +1,16 @@
 import sql from "mssql";
+const DB_NAME_TITULAR = process.env.DB_NAME_TITULAR;
+const DB_NAME_PERMISO = process.env.DB_NAME_PERMISO;
+const DB_NAME_TESORERIA = process.env.DB_NAME_TESORERIA;
+const DB_NAME_COMUN = process.env.DB_NAME_COMUN;
 
 let pool: sql.ConnectionPool | null = null;
 let connectionAttemptInProgress: boolean = false;
+const DB_NAME = process.env.DB_NAME;
 
-export async function connectToDB(): Promise<sql.ConnectionPool | null> {
+export async function connectToDB(
+  nombre_db: string,
+): Promise<sql.ConnectionPool | null> {
   if (connectionAttemptInProgress) {
     while (connectionAttemptInProgress) {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -36,12 +43,31 @@ export async function connectToDB(): Promise<sql.ConnectionPool | null> {
         pool = null;
       }
     }
+    let NOMBRE_BASE: string;
+
+    switch (nombre_db) {
+      case "comun":
+        NOMBRE_BASE = DB_NAME_COMUN!;
+        break;
+      case "tesoreria":
+        NOMBRE_BASE = DB_NAME_TESORERIA!;
+        break;
+      case "titular":
+        NOMBRE_BASE = DB_NAME_TITULAR!;
+        break;
+      case "permiso":
+        NOMBRE_BASE = DB_NAME_PERMISO!;
+        break;
+      default:
+        NOMBRE_BASE = DB_NAME!;
+        break;
+    }
 
     const config: sql.config = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       server: process.env.DB_HOST || "localhost",
-      database: process.env.DB_NAME,
+      database: NOMBRE_BASE,
       options: {
         encrypt: true,
         trustServerCertificate: true,

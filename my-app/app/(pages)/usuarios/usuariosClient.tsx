@@ -98,58 +98,76 @@ export default function UsuariosClient({ initialUsers }: Props) {
       return;
     }
 
-    // Eliminación inmediata en frontend
     setUsers((prev) => prev.filter((u) => u.id !== id));
-
     router.refresh();
   };
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-black">
-        Lista de usuarios registrados
-      </h1>
-      <p className="text-center text-gray-600 mb-6">
-        Aquí puedes visualizar, editar o eliminar los usuarios registrados en el
-        sistema.
-      </p>
+      {/* Header sección */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-black">
+            Lista de usuarios
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Gestiona los usuarios registrados en el sistema.
+          </p>
+        </div>
 
-      <div className="flex justify-center mb-6">
         <button
           onClick={handleAddUser}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
         >
-          Agregar Nuevo Usuario
+          + Nuevo Usuario
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 p-2">Nombre</th>
-              <th className="border border-gray-300 p-2">Email</th>
-              <th className="border border-gray-300 p-2">Rol</th>
-              <th className="border border-gray-300 p-2">Estado</th>
-              <th className="border border-gray-300 p-2">Acciones</th>
+      {/* Tabla */}
+      <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+            <tr>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3">Email</th>
+              <th className="px-6 py-3">Rol</th>
+              <th className="px-6 py-3 text-center">Estado</th>
+              <th className="px-6 py-3 text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody>
+
+          <tbody className="divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className="text-center">
-                <td className="border border-gray-300 p-2">{user.name}</td>
-                <td className="border border-gray-300 p-2">{user.email}</td>
-                <td className="border border-gray-300 p-2">{user.rol}</td>
-                <td className="border border-gray-300 p-2">{user.estado}</td>
-                <td className="border border-gray-300 p-2">
+              <tr
+                key={user.id}
+                className="hover:bg-gray-50 transition-colors duration-200"
+              >
+                <td className="px-6 py-4 font-medium text-gray-900">
+                  {user.name}
+                </td>
+                <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                <td className="px-6 py-4 text-gray-600">{user.rol}</td>
+                <td className="px-6 py-4 text-center">
+                  <span
+                    className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                      user.estado === "Activo"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {user.estado}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center space-x-2">
                   <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs transition"
                     onClick={() => handleEditUser(user)}
                   >
                     Editar
                   </button>
+
                   <button
-                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
                     onClick={() => handleDeleteUser(user.id)}
                   >
                     Eliminar
@@ -161,11 +179,11 @@ export default function UsuariosClient({ initialUsers }: Props) {
         </table>
       </div>
 
-      {/* ================= MODAL ================= */}
+      {/* Modal */}
       {showModal && tempUser && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md animate-fadeIn">
+            <h2 className="text-xl font-semibold mb-6">
               {isEditing ? "Editar Usuario" : "Agregar Usuario"}
             </h2>
 
@@ -189,19 +207,18 @@ export default function UsuariosClient({ initialUsers }: Props) {
                 }
 
                 setShowModal(false);
-
                 router.refresh();
               }}
+              className="space-y-4"
             >
-              {/* NOMBRE */}
-              <div className="mb-4">
-                <label className="block mb-1">Nombre</label>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Nombre</label>
                 <input
                   name="nombre"
                   type="text"
                   value={tempUser.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full border rounded px-2 py-1"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
                 {errors.name && (
@@ -209,15 +226,14 @@ export default function UsuariosClient({ initialUsers }: Props) {
                 )}
               </div>
 
-              {/* EMAIL */}
-              <div className="mb-4">
-                <label className="block mb-1">Email</label>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Email</label>
                 <input
                   name="email"
                   type="email"
                   value={tempUser.email}
                   onChange={(e) => handleEmailChange(e.target.value)}
-                  className="w-full border rounded px-2 py-1"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
                 {errors.email && (
@@ -225,26 +241,23 @@ export default function UsuariosClient({ initialUsers }: Props) {
                 )}
               </div>
 
-              {/* ROL */}
-              <div className="mb-4">
-                <label className="block mb-1">Rol</label>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Rol</label>
                 <select
                   name="rol"
                   value={tempUser.rol}
                   onChange={(e) =>
                     setTempUser({ ...tempUser, rol: e.target.value })
                   }
-                  className="w-full border rounded px-2 py-1"
-                  required
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="Viewer">Viewer</option>
                   <option value="Admin">Admin</option>
                 </select>
               </div>
 
-              {/* ESTADO */}
-              <div className="mb-4">
-                <label className="block mb-1">Estado</label>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Estado</label>
                 <select
                   name="estado"
                   value={tempUser.estado}
@@ -254,26 +267,25 @@ export default function UsuariosClient({ initialUsers }: Props) {
                       estado: e.target.value as "Activo" | "Inactivo",
                     })
                   }
-                  className="w-full border rounded px-2 py-1"
-                  required
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="Activo">Activo</option>
                   <option value="Inactivo">Inactivo</option>
                 </select>
               </div>
 
-              {/* BOTONES */}
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition"
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   Guardar
                 </button>

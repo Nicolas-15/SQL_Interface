@@ -101,34 +101,64 @@ export default function IntercambiarTitularPage() {
       </p>
 
       {/* TABLA DE ROLES */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 p-2">Rol</th>
-              <th className="border border-gray-300 p-2">Nombre</th>
-              <th className="border border-gray-300 p-2">Estado</th>
+      <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+            <tr>
+              <th className="px-6 py-3">Rol</th>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3 text-center">Estado</th>
             </tr>
           </thead>
-          <tbody>
-            <tr className="text-center">
-              <td className="border border-gray-300 p-2">Alcalde/sa</td>
-              <td className="border border-gray-300 p-2">
+
+          <tbody className="divide-y divide-gray-200">
+            {/* Alcalde */}
+            <tr className="hover:bg-gray-50 transition-colors duration-200">
+              <td className="px-6 py-4 font-medium text-gray-900">
+                Alcalde/sa
+              </td>
+
+              <td className="px-6 py-4 text-gray-600">
                 {titulares.ALCALDE.nombre}
               </td>
-              <td className="border border-gray-300 p-2">
-                {titulares.ALCALDE.esTitular ? "Titular activo" : "No titular"}
+
+              <td className="px-6 py-4 text-center">
+                <span
+                  className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                    titulares.ALCALDE.esTitular
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {titulares.ALCALDE.esTitular
+                    ? "Titular activo"
+                    : "No titular"}
+                </span>
               </td>
             </tr>
-            <tr className="text-center">
-              <td className="border border-gray-300 p-2">Administrador/a</td>
-              <td className="border border-gray-300 p-2">
+
+            {/* Administrador */}
+            <tr className="hover:bg-gray-50 transition-colors duration-200">
+              <td className="px-6 py-4 font-medium text-gray-900">
+                Administrador/a
+              </td>
+
+              <td className="px-6 py-4 text-gray-600">
                 {titulares.ADMINISTRADOR.nombre}
               </td>
-              <td className="border border-gray-300 p-2">
-                {titulares.ADMINISTRADOR.esTitular
-                  ? "Titular activo"
-                  : "No titular"}
+
+              <td className="px-6 py-4 text-center">
+                <span
+                  className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                    titulares.ADMINISTRADOR.esTitular
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {titulares.ADMINISTRADOR.esTitular
+                    ? "Titular activo"
+                    : "No titular"}
+                </span>
               </td>
             </tr>
           </tbody>

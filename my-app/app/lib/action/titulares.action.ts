@@ -8,9 +8,10 @@ export async function cambiarTitularAction(
   nombre: string,
   rut: string,
   id_rol: string,
+  usuario: string,
 ) {
   try {
-    const result = await repo.changeTitular({ nombre, rut, id_rol });
+    const result = await repo.changeTitular({ nombre, rut, id_rol, usuario });
     return result;
   } catch (err) {
     console.error(err);

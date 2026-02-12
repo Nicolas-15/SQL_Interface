@@ -16,21 +16,18 @@ export interface CrearAuditoriaDB {
 }
 
 export class AuditoriaRepository {
-
-  /* =========================
-     Registrar auditoría
-  ========================== */
+  /* Registrar auditoría */
   async createAuditoria(data: CrearAuditoriaDB): Promise<AuditoriaDB> {
-    const pool = await connectToDB();
+    const pool = await connectToDB("");
     if (!pool) {
       throw new Error("No se pudo conectar a la base de datos");
     }
 
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input("idUsuario", sql.UniqueIdentifier, data.id_usuario)
       .input("registro", sql.VarChar, data.registro)
-      .input("descripcion", sql.VarChar, data.descripcion)
-      .query(`
+      .input("descripcion", sql.VarChar, data.descripcion).query(`
         INSERT INTO auditoria
           (id_usuario, registro, descripcion)
         OUTPUT
@@ -46,16 +43,14 @@ export class AuditoriaRepository {
     return result.recordset[0];
   }
 
-  /* =========================
-     Listar auditoría por usuario
-  ========================== */
+  /*Listar auditoría por usuario*/
   async findByUsuario(idUsuario: string): Promise<AuditoriaDB[]> {
-    const pool = await connectToDB();
+    const pool = await connectToDB("");
     if (!pool) return [];
 
-    const result = await pool.request()
-      .input("idUsuario", sql.UniqueIdentifier, idUsuario)
-      .query(`
+    const result = await pool
+      .request()
+      .input("idUsuario", sql.UniqueIdentifier, idUsuario).query(`
         SELECT
           id_auditoria,
           id_usuario,
@@ -70,16 +65,12 @@ export class AuditoriaRepository {
     return result.recordset;
   }
 
-  /* =========================
-     Listar auditoría global
-  ========================== */
+  /*Listar auditoría global*/
   async findAll(limit = 100): Promise<AuditoriaDB[]> {
-    const pool = await connectToDB();
+    const pool = await connectToDB("");
     if (!pool) return [];
 
-    const result = await pool.request()
-      .input("limit", sql.Int, limit)
-      .query(`
+    const result = await pool.request().input("limit", sql.Int, limit).query(`
         SELECT TOP (@limit)
           id_auditoria,
           id_usuario,

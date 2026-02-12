@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import LoginForm from "./loginForm";
 
 export default async function LoginPage() {
-  const cookieStore = await cookies(); // ⚡ IMPORTANTE: await aquí
-  const token = cookieStore.get("auth_token")?.value; // ahora sí funciona
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
 
   if (token) {
     redirect("/"); // ya logueado → redirige al dashboard

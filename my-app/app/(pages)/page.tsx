@@ -8,7 +8,6 @@ export default async function HomePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
 
-  // Si no hay token → redirigir al login
   if (!token) {
     redirect("/login");
   }
@@ -54,11 +53,26 @@ export default async function HomePage() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {cards.map((card) => (
           <Link key={card.href} href={card.href} className="block h-full">
-            <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all h-full flex flex-col">
+            <div
+              className="
+                group
+                p-6
+                bg-white
+                border border-gray-200
+                rounded-2xl
+                shadow-sm
+                hover:shadow-lg hover:-translate-y-1
+                transition-all duration-300
+                h-full flex flex-col
+              "
+            >
               <div className="mb-4">{card.icon}</div>
+
               <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
+
               <p className="text-gray-600">{card.description}</p>
-              <div className="flex justify-end mt-auto font-semibold text-blue-600">
+
+              <div className="flex justify-end mt-auto font-semibold text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
                 Acceder →
               </div>
             </div>

@@ -22,9 +22,7 @@ export interface ActualizarUsuarioDTO {
 export class UsuarioService {
   private usuarioRepository = new UsuarioRepository();
 
-  /* =========================
-     Crear usuario
-  ========================== */
+  /* Crear usuario con validacion si el email o nombre de usuario ya existe*/
   async crearUsuario(data: CrearUsuarioDTO) {
     const existeEmail = await this.usuarioRepository.findByEmail(data.email);
     if (existeEmail) {
@@ -50,16 +48,14 @@ export class UsuarioService {
     return nuevoUsuario;
   }
 
-  /* =========================
-     Actualizar usuario
-  ========================== */
+  /*Actualizar usuario con validacion de usuario existente*/
   async actualizarUsuario(data: ActualizarUsuarioDTO) {
     const usuario = await this.usuarioRepository.findById(data.id_usuario);
     if (!usuario) {
       throw new Error("USUARIO_NO_EXISTE");
     }
 
-    const pool = await connectToDB();
+    const pool = await connectToDB("");
     if (!pool) throw new Error("DB_ERROR");
 
     await pool
@@ -78,9 +74,7 @@ export class UsuarioService {
     await this.usuarioRepository.setActivo(data.id_usuario, data.activo);
   }
 
-  /* =========================
-     Activar / Desactivar
-  ========================== */
+  /*Activar / Desactivar*/
   async cambiarEstado(id_usuario: string, activo: boolean) {
     const usuario = await this.usuarioRepository.findById(id_usuario);
     if (!usuario) {
@@ -90,16 +84,14 @@ export class UsuarioService {
     await this.usuarioRepository.setActivo(id_usuario, activo);
   }
 
-  /* =========================
-     Eliminar usuario
-  ========================== */
+  /*Eliminar usuario*/
   async eliminarUsuario(id_usuario: string) {
     const usuario = await this.usuarioRepository.findById(id_usuario);
     if (!usuario) {
       throw new Error("USUARIO_NO_EXISTE");
     }
 
-    const pool = await connectToDB();
+    const pool = await connectToDB("");
     if (!pool) throw new Error("DB_ERROR");
 
     await pool.request().input("id", sql.UniqueIdentifier, id_usuario).query(`

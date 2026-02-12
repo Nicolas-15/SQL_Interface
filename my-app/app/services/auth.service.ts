@@ -23,34 +23,31 @@ export class AuthService {
   private usuarioRepo = new UsuarioRepository();
   private auditoriaRepo = new AuditoriaRepository();
 
-  /* =========================
-     LOGIN
-  ========================== */
+  /*Login*/
   async login(data: LoginInput): Promise<LoginResponse> {
     const { identificador, password } = data;
 
-    // 1️⃣ Buscar usuario por email o username
-    const usuario =
-      identificador.includes("@")
-        ? await this.usuarioRepo.findByEmail(identificador)
-        : await this.usuarioRepo.findByUsername(identificador);
+    //1) Buscar usuario por email o username
+    const usuario = identificador.includes("@")
+      ? await this.usuarioRepo.findByEmail(identificador)
+      : await this.usuarioRepo.findByUsername(identificador);
 
     if (!usuario) {
       throw new Error("USUARIO_NO_EXISTE");
     }
 
-    // 2️⃣ Verificar activo
+    //2) Verificar activo
     if (!usuario.activo) {
       throw new Error("USUARIO_INACTIVO");
     }
 
-    // 3️⃣ Validar password
+    //3) Validar password
     const passwordValida = comparePassword(password, usuario.contraseña);
     if (!passwordValida) {
       throw new Error("CREDENCIALES_INVALIDAS");
     }
 
-    // 4️⃣ Generar JWT
+    //4) Generar JWT
     const token = generarJWT({
       id_usuario: usuario.id_usuario,
       usuario: usuario.usuario,
@@ -58,14 +55,14 @@ export class AuthService {
       id_rol: usuario.id_rol,
     });
 
-    // 5️⃣ Registrar auditoría
+    //5) Registrar auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
       registro: "LOGIN",
       descripcion: "Inicio de sesión exitoso",
     });
 
-    // 6️⃣ Respuesta limpia
+    //6) Retorno de los atributos
     return {
       token,
       usuario: {

@@ -16,7 +16,7 @@ const roleMap: Record<string, string> = {
 };
 
 export async function getUsers(): Promise<User[]> {
-  const db = await connectToDB();
+  const db = await connectToDB("");
   if (!db) throw new Error("No DB connection");
 
   const result = await db
