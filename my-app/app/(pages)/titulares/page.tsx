@@ -12,7 +12,7 @@ export default async function Page() {
       </h1>
       <p className="text-center text-gray-600 mb-6">
         En esta sección se muestran los titulares asociados, con opciones para
-        editar sus datos o eliminarlos del sistema.
+        editar sus datos.
       </p>
       <TitularesTable titulares={titulares} />
     </div>

@@ -1,11 +1,9 @@
-// app/(pages)/consultas/intercambiar-titular/page.tsx
-
-import { TitularRepository } from "@/app/repositories/titular.repository";
+import { FirmanteRepository } from "@/app/repositories/firmante.repository";
 import IntercambiarTitularPage from "./IntercambiarTitularPage";
 
 export default async function Page() {
-  const repo = new TitularRepository();
-  const titulares = await repo.findAll();
+  const repo = new FirmanteRepository();
+  const titular = await repo.findTitularActual();
 
-  return <IntercambiarTitularPage titulares={titulares} />;
+  return <IntercambiarTitularPage titular={titular} />;
 }

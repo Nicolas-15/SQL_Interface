@@ -3,10 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { TitularDB } from "@/app/repositories/titular.repository";
-import {
-  cambiarTitularAction,
-  eliminarTitularAction,
-} from "../../lib/action/auth/titulares.action";
+import { cambiarTitularAction } from "@/app/lib/action/auth/titulares.action";
 
 type Props = {
   titulares: TitularDB[];
@@ -51,11 +48,6 @@ export default function TitularesTable({ titulares }: Props) {
     router.refresh();
   };
 
-  const handleDelete = async (id_rol: string) => {
-    await eliminarTitularAction(id_rol);
-    router.refresh();
-  };
-
   return (
     <div className="space-y-6">
       {/* Tabla */}
@@ -97,13 +89,6 @@ export default function TitularesTable({ titulares }: Props) {
                     onClick={() => handleEdit(t)}
                   >
                     Editar
-                  </button>
-
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
-                    onClick={() => handleDelete(t.id_rol)}
-                  >
-                    Eliminar
                   </button>
                 </td>
               </tr>
