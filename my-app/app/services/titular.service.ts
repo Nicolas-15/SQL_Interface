@@ -34,4 +34,9 @@ export class TitularService {
   async eliminarTitularPorRol(id_rol: string): Promise<void> {
     return this.titularRepo.deleteByRol(id_rol);
   }
+
+  /*Intercambiar titulares entre alcalde y administradora*/
+  async intercambiarTitulares(): Promise<void> {
+    return this.titularRepo.intercambiarTitulares();
+  }
 }

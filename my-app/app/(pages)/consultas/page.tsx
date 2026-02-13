@@ -77,7 +77,7 @@ export default function Consultas() {
             "
           >
             {/* Icono + texto */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4 md:max-w-2/3 w-auto lg:w-auto">
               {op.icon}
               <div>
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">

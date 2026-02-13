@@ -6,7 +6,7 @@ import { TitularDB } from "@/app/repositories/titular.repository";
 import {
   cambiarTitularAction,
   eliminarTitularAction,
-} from "../../lib/action/titulares.action";
+} from "../../lib/action/auth/titulares.action";
 
 type Props = {
   titulares: TitularDB[];
