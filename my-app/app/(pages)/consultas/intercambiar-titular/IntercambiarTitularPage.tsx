@@ -31,7 +31,10 @@ export default function IntercambiarTitularPage({ titular }: Props) {
           <p className="text-gray-600">{titular.Id_Firmante}</p>
         </div>
       ) : (
-        <p>No se encontró titular</p>
+        <p className="text-center font-bold text-red-500 text-lg">
+          Titular Actual no coincide con el usuario almacenado en la base de
+          datos
+        </p>
       )}
 
       <div className="flex justify-center mt-6">

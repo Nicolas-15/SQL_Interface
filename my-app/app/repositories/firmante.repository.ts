@@ -97,16 +97,6 @@ export class FirmanteRepository {
     const idSubrogante = subrogante.usuario;
     const nombreAlcalde = alcalde.nombre.toUpperCase();
     const nombreSubrogante = subrogante.nombre.toUpperCase();
-
-    console.log(">>> Datos preparados:", {
-      rutAlcalde,
-      rutSubrogante,
-      idAlcalde,
-      idSubrogante,
-      nombreAlcalde,
-      nombreSubrogante,
-    });
-
     const transaction = new sql.Transaction(pool);
     try {
       await transaction.begin();
