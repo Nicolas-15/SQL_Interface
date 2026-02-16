@@ -1,66 +1,70 @@
 import sql from "mssql";
+
 const DB_NAME_TITULAR = process.env.DB_NAME_TITULAR;
 const DB_NAME_PERMISO = process.env.DB_NAME_PERMISO;
 const DB_NAME_TESORERIA = process.env.DB_NAME_TESORERIA;
 const DB_NAME_COMUN = process.env.DB_NAME_COMUN;
+const DB_NAME_DEFAULT = process.env.DB_NAME;
 
-let pool: sql.ConnectionPool | null = null;
-let connectionAttemptInProgress: boolean = false;
-const DB_NAME = process.env.DB_NAME;
+const pools = new Map<string, sql.ConnectionPool>();
+const connectionLocks = new Map<string, boolean>();
 
 export async function connectToDB(
   nombre_db: string,
 ): Promise<sql.ConnectionPool | null> {
-  if (connectionAttemptInProgress) {
-    while (connectionAttemptInProgress) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
+  let NOMBRE_BASE: string;
+
+  switch (nombre_db) {
+    case "comun":
+      NOMBRE_BASE = DB_NAME_COMUN!;
+      break;
+    case "tesoreria":
+      NOMBRE_BASE = DB_NAME_TESORERIA!;
+      break;
+    case "titular":
+      NOMBRE_BASE = DB_NAME_TITULAR!;
+      break;
+    case "permiso":
+      NOMBRE_BASE = DB_NAME_PERMISO!;
+      break;
+    default:
+      NOMBRE_BASE = DB_NAME_DEFAULT!;
+      break;
+  }
+
+  if (!NOMBRE_BASE) {
+    console.error(`Database name not fully configured for alias: ${nombre_db}`);
+    return null;
+  }
+
+  if (pools.has(NOMBRE_BASE)) {
+    const pool = pools.get(NOMBRE_BASE);
     if (pool && pool.connected) {
       return pool;
     }
   }
 
-  connectionAttemptInProgress = true;
-
-  try {
-    if (pool && pool.connected) {
-      connectionAttemptInProgress = false;
-      return pool;
+  if (connectionLocks.get(NOMBRE_BASE)) {
+    while (connectionLocks.get(NOMBRE_BASE)) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
-
-    if (pool) {
-      try {
-        console.warn("Attempting to reconnect to existing pool...");
-        await pool.connect();
-        console.log("Successfully reconnected to existing pool.");
-        connectionAttemptInProgress = false;
+    if (pools.has(NOMBRE_BASE)) {
+      const pool = pools.get(NOMBRE_BASE);
+      if (pool && pool.connected) {
         return pool;
-      } catch (reconnectError) {
-        console.warn(
-          "Failed to reconnect to existing pool, creating a new one:",
-          reconnectError,
-        );
-        pool = null;
       }
     }
-    let NOMBRE_BASE: string;
+  }
 
-    switch (nombre_db) {
-      case "comun":
-        NOMBRE_BASE = DB_NAME_COMUN!;
-        break;
-      case "tesoreria":
-        NOMBRE_BASE = DB_NAME_TESORERIA!;
-        break;
-      case "titular":
-        NOMBRE_BASE = DB_NAME_TITULAR!;
-        break;
-      case "permiso":
-        NOMBRE_BASE = DB_NAME_PERMISO!;
-        break;
-      default:
-        NOMBRE_BASE = DB_NAME!;
-        break;
+  connectionLocks.set(NOMBRE_BASE, true);
+
+  try {
+    if (pools.has(NOMBRE_BASE)) {
+      const pool = pools.get(NOMBRE_BASE);
+      if (pool && pool.connected) {
+        connectionLocks.set(NOMBRE_BASE, false);
+        return pool;
+      }
     }
 
     const config: sql.config = {
@@ -84,26 +88,32 @@ export async function connectToDB(
       requestTimeout: 30000,
     };
 
-    console.log("Creating new database connection pool...");
+    console.log(`Creating new database connection pool for ${NOMBRE_BASE}...`);
     const newPool = new sql.ConnectionPool(config);
-    pool = await newPool.connect();
-    console.log("Database connection pool established.");
+    const connectedPool = await newPool.connect();
+    console.log(`Database connection pool established for ${NOMBRE_BASE}.`);
 
-    pool.on("error", (err) => {
-      console.log("SQL Pool Error (Runtime):", err);
-      if (pool && pool.connected) {
-        pool
-          .close()
-          .catch((e) => console.error("Error, closing errored pool:", e));
+    connectedPool.on("error", (err) => {
+      console.log(`SQL Pool Error (Runtime) for ${NOMBRE_BASE}:`, err);
+      if (pools.get(NOMBRE_BASE) === connectedPool) {
+        pools.delete(NOMBRE_BASE);
       }
-      pool = null;
+      try {
+        connectedPool
+          .close()
+          .catch((e) => console.error("Error closing pool", e));
+      } catch {}
     });
 
-    connectionAttemptInProgress = false;
-    return pool;
+    pools.set(NOMBRE_BASE, connectedPool);
+    connectionLocks.set(NOMBRE_BASE, false);
+    return connectedPool;
   } catch (error) {
-    console.error("Database connection error (Initial/New Pool):", error);
-    connectionAttemptInProgress = false;
+    console.error(
+      `Database connection error (Initial/New Pool) for ${NOMBRE_BASE}:`,
+      error,
+    );
+    connectionLocks.set(NOMBRE_BASE, false);
     return null;
   }
 }

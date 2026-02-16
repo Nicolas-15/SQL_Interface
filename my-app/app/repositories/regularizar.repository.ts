@@ -133,7 +133,7 @@ export class RegularizarRepository {
         WHERE Codigo_Area = 1
         AND Ano_Proceso = @AnoProceso
         AND NumeroDecreto = @NumeroDecreto
-        ORDER BY Id DESC
+        ORDER BY Id ASC, Fecha_Estado ASC
       `);
 
     return result.recordset || [];

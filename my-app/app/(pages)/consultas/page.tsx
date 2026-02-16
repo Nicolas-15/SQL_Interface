@@ -51,7 +51,7 @@ export default function Consultas() {
   return (
     <div className="py-10 bg-gray-50 min-h-screen">
       {/* Título */}
-      <div className="max-w-6xl mx-auto px-6 text-center mb-10">
+      <div className="mx-auto text-center mb-10 ">
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900 mb-4">
           Consultas Predefinidas
         </h1>
@@ -61,7 +61,7 @@ export default function Consultas() {
       </div>
 
       {/* Cards */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 gap-6 px-4 sm:px-6">
+      <div className=" mx-auto grid grid-cols-1 gap-6">
         {operaciones.map((op) => (
           <div
             key={op.id}

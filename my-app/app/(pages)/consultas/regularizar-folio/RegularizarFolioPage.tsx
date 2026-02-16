@@ -58,11 +58,8 @@ export default function RegularizarFolioPage() {
       if (res.success && res.decretos) {
         setDecretosLiberados(res.decretos as unknown as DecretoBD[]);
         setTotalRecords(res.total || 0);
-        // Scroll suave al inicio de la tabla (o contenedor) al cambiar de página
-        const tableContainer = document.getElementById("tabla-pendientes");
-        if (tableContainer) {
-          tableContainer.scrollIntoView({ behavior: "smooth" });
-        }
+
+        // Scroll eliminado para evitar saltos bruscos
       }
     } catch (e) {
       console.error(e);
@@ -196,7 +193,7 @@ export default function RegularizarFolioPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-6">
+    <div className="mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8 text-center">
         Regularización de Folio
       </h1>
@@ -244,22 +241,22 @@ export default function RegularizarFolioPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">
                   Decreto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[350px]">
                   Beneficiario
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[150px]">
                   Monto
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[150px]">
                   Estado (SDF)
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[200px]">
                   Acciones
                 </th>
               </tr>
@@ -286,8 +283,8 @@ export default function RegularizarFolioPage() {
                           timeZone: "UTC",
                         })}
                       </td>
-                      <td className="px-6 py-4 whitespace-normal max-w-xs wrap-break-word">
-                        <div className="text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-normal w-[350px]">
+                        <div className="text-sm font-medium text-gray-900 truncate w-[350px]">
                           {d.Nombre}
                         </div>
                         <div className="text-sm text-gray-500">{d.Rut}</div>
@@ -404,7 +401,7 @@ export default function RegularizarFolioPage() {
 
       {/* TABLA DE DECRETOS LIBERADOS (PENDIENTES) */}
       <div className="mt-12 mb-12">
-        <h2 className="text-xl font-bold mb-4 text-gray-700 border-b pb-2">
+        <h2 className="text-xl font-bold mb-4 text-gray-700 border-b pb-2 ">
           Decretos Pendientes de Regularizar (Liberados)
         </h2>
         {decretosLiberados.length === 0 ? (
@@ -414,27 +411,27 @@ export default function RegularizarFolioPage() {
         ) : (
           <div
             id="tabla-pendientes"
-            className="bg-white shadow-md rounded-xl overflow-hidden"
+            className="bg-white shadow-md rounded-xl overflow-hidden min-h-[1150px]"
           >
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-orange-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider w-[100px]">
                     Decreto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider w-[120px]">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-800 uppercase tracking-wider w-[350px]">
                     Beneficiario
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-orange-800 uppercase tracking-wider w-[150px]">
                     Monto
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-orange-800 uppercase tracking-wider w-[150px]">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-orange-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-orange-800 uppercase tracking-wider w-[200px]">
                     Acciones
                   </th>
                 </tr>
@@ -445,7 +442,7 @@ export default function RegularizarFolioPage() {
                     key={`lib-${d.Codigo_Area}-${d.Ano_Proceso}-${d.NumeroDecreto}`}
                   >
                     <tr>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[110px]">
                         <div className="font-bold text-gray-900">
                           {d.NumeroDecreto}
                         </div>
@@ -458,8 +455,8 @@ export default function RegularizarFolioPage() {
                           timeZone: "UTC",
                         })}
                       </td>
-                      <td className="px-6 py-4 whitespace-normal max-w-xs wrap-break-word">
-                        <div className="text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-normal w-[350px]">
+                        <div className="text-sm font-medium text-gray-900 truncate w-[350px]">
                           {d.Nombre}
                         </div>
                         <div className="text-sm text-gray-500">{d.Rut}</div>
