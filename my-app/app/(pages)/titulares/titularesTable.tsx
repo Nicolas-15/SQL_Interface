@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { TitularDB } from "@/app/repositories/titular.repository";
 import { cambiarTitularAction } from "@/app/lib/action/auth/titulares.action";
 
+import { toast } from "react-toastify";
+import ConfirmationToast from "@/app/components/ConfirmationToast";
+
 type Props = {
   titulares: TitularDB[];
 };
@@ -37,15 +40,35 @@ export default function TitularesTable({ titulares }: Props) {
 
   const handleSave = async () => {
     if (!editing) return;
-    // Se guarda nombre y rut, el rol se mantiene igual
-    await cambiarTitularAction(
-      formData.nombre,
-      formData.rut,
-      formData.id_rol,
-      formData.usuario,
+
+    toast(
+      ({ closeToast }) => (
+        <ConfirmationToast
+          message="¿Guardar cambios del titular?"
+          onConfirm={async () => {
+            // Se guarda nombre y rut, el rol se mantiene igual
+            await cambiarTitularAction(
+              formData.nombre,
+              formData.rut,
+              formData.id_rol,
+              formData.usuario,
+            );
+            setEditing(null);
+            router.refresh();
+            toast.success("Titular actualizado correctamente");
+          }}
+          closeToast={closeToast}
+        />
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "p-0 bg-transparent shadow-none",
+      },
     );
-    setEditing(null);
-    router.refresh();
   };
 
   return (

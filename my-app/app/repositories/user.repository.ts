@@ -9,6 +9,9 @@ export interface UsuarioDB {
   email: string;
   activo: boolean;
   id_rol: string | null;
+  nombre_rol: string | null;
+  codigo?: string | null;
+  fecha_expiracion?: Date | null;
 }
 
 export interface CrearUsuarioDB {
@@ -27,15 +30,17 @@ export class UsuarioRepository {
     const result = await pool.request().input("email", sql.VarChar(100), email)
       .query(`
         SELECT TOP 1
-        id_usuario,
-        nombre,
-        usuario,
-        contraseña,
-        email,
-        activo,
-        id_rol
-        FROM USUARIO
-        WHERE email = @email`);
+        u.id_usuario,
+        u.nombre,
+        u.usuario,
+        u.contraseña,
+        u.email,
+        u.activo,
+        u.id_rol,
+        r.nombre_rol
+        FROM USUARIO u
+        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        WHERE u.email = @email`);
     return result.recordset[0] ?? null;
   }
 
@@ -48,15 +53,17 @@ export class UsuarioRepository {
       .request()
       .input("usuario", sql.VarChar(100), username).query(`
         SELECT TOP 1
-        id_usuario,
-        nombre,
-        usuario,
-        contraseña,
-        email,
-        activo,
-        id_rol
-        FROM USUARIO
-        WHERE usuario = @usuario`);
+        u.id_usuario,
+        u.nombre,
+        u.usuario,
+        u.contraseña,
+        u.email,
+        u.activo,
+        u.id_rol,
+        r.nombre_rol
+        FROM USUARIO u
+        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        WHERE u.usuario = @usuario`);
     return result.recordset[0] ?? null;
   }
 
@@ -123,5 +130,70 @@ export class UsuarioRepository {
         SET activo = @activo
         WHERE id_usuario = @id
         `);
+  }
+  /* Setear Token */
+  async setRecoveryToken(
+    email: string,
+    token: string,
+    expiration: Date,
+  ): Promise<void> {
+    const pool = await connectToDB("");
+    if (!pool) return;
+
+    await pool
+      .request()
+      .input("email", sql.VarChar(100), email)
+      .input("codigo", sql.VarChar(255), token)
+      .input("fecha_expiracion", sql.DateTime2, expiration).query(`
+        UPDATE USUARIO
+        SET codigo = @codigo,
+            fecha_expiracion = @fecha_expiracion
+        WHERE email = @email
+      `);
+  }
+
+  /* Verificar Token */
+  async findByToken(token: string): Promise<UsuarioDB | null> {
+    const pool = await connectToDB("");
+    if (!pool) return null;
+
+    const result = await pool.request().input("codigo", sql.VarChar(255), token)
+      .query(`
+        SELECT TOP 1
+          id_usuario,
+          nombre,
+          usuario,
+          contraseña,
+          email,
+          activo,
+          id_rol,
+          codigo,
+          fecha_expiracion
+        FROM USUARIO
+        WHERE codigo = @codigo
+          AND fecha_expiracion > GETDATE()
+      `);
+
+    return result.recordset[0] ?? null;
+  }
+
+  /* Actualizar contraseña con Token */
+  async updatePasswordWithToken(
+    idUsuario: string,
+    newPasswordHash: string,
+  ): Promise<void> {
+    const pool = await connectToDB("");
+    if (!pool) return;
+
+    await pool
+      .request()
+      .input("id", sql.UniqueIdentifier, idUsuario)
+      .input("contraseña", sql.VarChar, newPasswordHash).query(`
+        UPDATE USUARIO
+        SET contraseña = @contraseña,
+            codigo = NULL,
+            fecha_expiracion = NULL
+        WHERE id_usuario = @id
+      `);
   }
 }

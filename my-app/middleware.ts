@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verificarJWT } from "./app/lib/utils/jwt";
+import { tieneAcceso } from "./app/lib/utils/roles.config";
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Permitir login sin token
-  if (pathname === "/login") {
+  // Permitir login y sus sub-rutas sin token
+  if (pathname.startsWith("/login")) {
     return NextResponse.next();
   }
 
@@ -20,7 +21,19 @@ export function proxy(request: NextRequest) {
 
   try {
     // Validar JWT
-    verificarJWT(token);
+    const payload = verificarJWT(token) as {
+      nombre_rol?: string | null;
+    };
+
+    const nombreRol = payload.nombre_rol || null;
+
+    // Verificar permisos de ruta
+    // La página principal "/" es accesible para todos los roles
+    if (pathname !== "/" && !tieneAcceso(nombreRol, pathname)) {
+      // Redirigir al Home si no tiene acceso
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
     return NextResponse.next();
   } catch {
     // Token inválido o expirado
@@ -35,3 +48,5 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|css|js|map)$).*)",
   ],
 };
+
+export const runtime = "nodejs";

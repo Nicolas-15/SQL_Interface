@@ -11,26 +11,25 @@ type DBUser = {
   id_rol: string;
 };
 
-const roleMap: Record<string, string> = {
-  "1A139223-1FCD-416C-B8FF-0F19BD52C986": "Admin",
-};
-
 export async function getUsers(): Promise<User[]> {
   const db = await connectToDB("");
   if (!db) throw new Error("No DB connection");
 
-  const result = await db
-    .request()
-    .query("SELECT id_usuario, nombre, email, activo, id_rol FROM usuario");
+  const result = await db.request().query(`
+      SELECT u.id_usuario, u.nombre, u.email, u.activo, u.id_rol, r.nombre_rol
+      FROM usuario u
+      LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+    `);
 
-  return (result.recordset as DBUser[]).map((u) => ({
-    id: u.id_usuario,
-    name: u.nombre,
-    email: u.email,
-    rol: roleMap[u.id_rol] || "Viewer",
-
-    estado: Boolean(u.activo) ? "Activo" : "Inactivo",
-  }));
+  return (result.recordset as (DBUser & { nombre_rol?: string })[]).map(
+    (u) => ({
+      id: u.id_usuario,
+      name: u.nombre,
+      email: u.email,
+      rol: u.nombre_rol || "Sin rol",
+      estado: Boolean(u.activo) ? "Activo" : "Inactivo",
+    }),
+  );
 }
 
 export default async function UsuariosPage() {

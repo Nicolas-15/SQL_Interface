@@ -8,6 +8,9 @@ import {
 } from "@/app/lib/action/auth/usuarios.action";
 import { useRouter } from "next/navigation";
 
+import { toast } from "react-toastify";
+import ConfirmationToast from "@/app/components/ConfirmationToast";
+
 export type User = {
   id: string;
   name: string;
@@ -24,6 +27,7 @@ export default function UsuariosClient({ initialUsers }: Props) {
   const router = useRouter();
 
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [search, setSearch] = useState("");
   const [tempUser, setTempUser] = useState<User | null>(null);
   const [errors, setErrors] = useState({ name: "", email: "" });
   const [isEditing, setIsEditing] = useState(false);
@@ -32,6 +36,12 @@ export default function UsuariosClient({ initialUsers }: Props) {
   useEffect(() => {
     setUsers(initialUsers);
   }, [initialUsers]);
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const capitalizeName = (name: string) =>
     name.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -89,23 +99,40 @@ export default function UsuariosClient({ initialUsers }: Props) {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm("¿Eliminar este usuario?")) return;
+    toast(
+      ({ closeToast }) => (
+        <ConfirmationToast
+          message="¿Eliminar este usuario?"
+          onConfirm={async () => {
+            const result = await eliminarUsuarioAction(id);
 
-    const result = await eliminarUsuarioAction(id);
+            if (result?.error) {
+              toast.error(result.error);
+              return;
+            }
 
-    if (result?.error) {
-      alert(result.error);
-      return;
-    }
-
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-    router.refresh();
+            setUsers((prev) => prev.filter((u) => u.id !== id));
+            router.refresh();
+            toast.success("Usuario eliminado correctamente");
+          }}
+          closeToast={closeToast}
+        />
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "p-0 bg-transparent shadow-none",
+      },
+    );
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-7xl mx-auto py-4 sm:py-6">
       {/* Header sección */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 py-8">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold text-black">
             Lista de usuarios
@@ -123,6 +150,25 @@ export default function UsuariosClient({ initialUsers }: Props) {
         </button>
       </div>
 
+      {/* Buscador */}
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:max-w-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+        />
+        <p className="text-sm text-gray-500">
+          Mostrando{" "}
+          <span className="font-semibold text-gray-700">
+            {filteredUsers.length}
+          </span>{" "}
+          de <span className="font-semibold text-gray-700">{users.length}</span>{" "}
+          usuarios
+        </p>
+      </div>
+
       {/* Tabla */}
       <div className="overflow-x-auto bg-white rounded-xl shadow-md">
         <table className="w-full text-sm text-left">
@@ -137,44 +183,88 @@ export default function UsuariosClient({ initialUsers }: Props) {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                className="hover:bg-gray-50 transition-colors duration-200"
-              >
-                <td className="px-6 py-4 font-medium text-gray-900">
-                  {user.name}
-                </td>
-                <td className="px-6 py-4 text-gray-600">{user.email}</td>
-                <td className="px-6 py-4 text-gray-600">{user.rol}</td>
-                <td className="px-6 py-4 text-center">
-                  <span
-                    className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      user.estado === "Activo"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.estado}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center space-x-2">
-                  <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs transition"
-                    onClick={() => handleEditUser(user)}
-                  >
-                    Editar
-                  </button>
-
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    Eliminar
-                  </button>
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center">
+                  <p className="text-gray-400 text-sm">
+                    No se encontraron usuarios
+                    {search && (
+                      <span>
+                        {" "}
+                        para "
+                        <span className="font-medium text-gray-600">
+                          {search}
+                        </span>
+                        "
+                      </span>
+                    )}
+                  </p>
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    {user.name}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                  <td className="px-6 py-4 text-gray-600">{user.rol}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span
+                      className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        user.estado === "Activo"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.estado}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center space-x-2">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs transition"
+                      onClick={() => handleEditUser(user)}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-md text-xs transition"
+                      onClick={async () => {
+                        if (
+                          !confirm(
+                            `¿Resetear la contraseña de ${user.name} a "123456"?`,
+                          )
+                        )
+                          return;
+                        const { resetPasswordAction } =
+                          await import("@/app/lib/action/auth/usuarios.action");
+                        const result = await resetPasswordAction(user.id);
+                        if (result.success) {
+                          toast.success(
+                            `Contraseña reseteada a: ${result.password}`,
+                          );
+                        } else {
+                          toast.error(result.error || "Error al resetear");
+                        }
+                      }}
+                    >
+                      Resetear
+                    </button>
+
+                    <button
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
+                      onClick={() => handleDeleteUser(user.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -192,22 +282,49 @@ export default function UsuariosClient({ initialUsers }: Props) {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
 
-                let result;
+                toast(
+                  ({ closeToast }) => (
+                    <ConfirmationToast
+                      message={
+                        isEditing
+                          ? "¿Guardar cambios del usuario?"
+                          : "¿Crear nuevo usuario?"
+                      }
+                      onConfirm={async () => {
+                        let result;
 
-                if (isEditing && tempUser?.id) {
-                  formData.append("id_usuario", tempUser.id);
-                  result = await actualizarUsuarioAction(formData);
-                } else {
-                  result = await crearUsuarioAction(formData);
-                }
+                        if (isEditing && tempUser?.id) {
+                          formData.append("id_usuario", tempUser.id);
+                          result = await actualizarUsuarioAction(formData);
+                        } else {
+                          result = await crearUsuarioAction(formData);
+                        }
 
-                if (result?.error) {
-                  alert(result.error);
-                  return;
-                }
+                        if (result?.error) {
+                          toast.error(result.error);
+                          return;
+                        }
 
-                setShowModal(false);
-                router.refresh();
+                        setShowModal(false);
+                        router.refresh();
+                        toast.success(
+                          isEditing
+                            ? "Usuario actualizado correctamente"
+                            : "Usuario creado correctamente",
+                        );
+                      }}
+                      closeToast={closeToast}
+                    />
+                  ),
+                  {
+                    position: "top-center",
+                    autoClose: false,
+                    closeOnClick: false,
+                    draggable: false,
+                    hideProgressBar: true,
+                    className: "p-0 bg-transparent shadow-none",
+                  },
+                );
               }}
               className="space-y-4"
             >
@@ -251,8 +368,14 @@ export default function UsuariosClient({ initialUsers }: Props) {
                   }
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Viewer">Viewer</option>
-                  <option value="Admin">Admin</option>
+                  <option value="admin">Admin</option>
+                  <option value="Soporte">Soporte</option>
+                  <option value="Tesorería">Tesorería</option>
+                  <option value="Tránsito">Tránsito</option>
+                  <option value="Finanzas">Finanzas</option>
+                  <option value="administrador municipal">
+                    Adm. Municipal
+                  </option>
                 </select>
               </div>
 

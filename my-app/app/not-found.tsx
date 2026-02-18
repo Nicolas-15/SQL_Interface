@@ -1,26 +1,26 @@
 import Link from "next/link";
+import { IconHome, IconMoodSad } from "@tabler/icons-react";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4">
-      <div className="text-center">
-        <h1 className="mb-4 text-6xl font-bold text-cc-text md:text-8xl">
-          404
-        </h1>
-
-        <h2 className="mb-3 text-2xl font-semibold text-cc-text md:text-3xl">
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="max-w-md w-full bg-white border border-gray-100 rounded-2xl shadow-lg p-8 text-center">
+        <div className="inline-flex p-3 bg-gray-100 text-gray-400 rounded-full mb-4">
+          <IconMoodSad className="w-10 h-10" />
+        </div>
+        <h1 className="text-6xl font-bold text-gray-200 mb-2">404</h1>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
           Página no encontrada
         </h2>
-
-        <p className="mb-8 max-w-md text-pretty text-white md:text-lg">
-          Lo sentimos, la página que estás buscando no existe o ha sido movida.
+        <p className="text-gray-500 text-sm mb-6">
+          La página que buscas no existe o fue movida.
         </p>
-
         <Link
           href="/"
-          className="inline-flex items-center justify-center rounded-lg bg-[#1e2ab0] px-6 py-3 text-base font-medium text-white hover:bg-cc-primary md:text-lg hover:scale-105 active:scale-95 transition-all duration-100"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-md"
         >
-          Volver al Inicio
+          <IconHome className="w-4 h-4" />
+          Volver al inicio
         </Link>
       </div>
     </div>

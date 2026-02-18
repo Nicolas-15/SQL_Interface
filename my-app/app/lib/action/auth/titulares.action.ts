@@ -43,7 +43,7 @@ export async function cambiarTitularAction(
       rut,
       id_rol,
       usuario,
-      esTitular: false, // Default value, implementation detail
+      esTitular: false,
     });
     return { success: true };
   } catch (err) {

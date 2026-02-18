@@ -2,6 +2,9 @@
 
 import { UsuarioService } from "@/app/services/usuario.service";
 import { revalidatePath } from "next/cache";
+import { hashPassword } from "@/app/lib/utils/hash";
+import { connectToDB } from "@/app/lib/utils/db-connection";
+import sql from "mssql";
 
 const usuarioService = new UsuarioService();
 
@@ -66,11 +69,21 @@ export async function actualizarUsuarioAction(formData: FormData) {
     const rol = String(formData.get("rol") ?? "");
     const estado = String(formData.get("estado") ?? "");
 
-    // Mapear rol string → id_rol real
+    // Buscar id_rol por nombre_rol en la BD
     let id_rol: string | null = null;
-
-    if (rol === "Admin") {
-      id_rol = "1A139223-1FCD-416C-B8FF-0F19BD52C986"; // tu UUID real de Admin
+    if (rol) {
+      const { connectToDB } = await import("@/app/lib/utils/db-connection");
+      const sql = (await import("mssql")).default;
+      const db = await connectToDB("");
+      if (db) {
+        const result = await db
+          .request()
+          .input("nombre_rol", sql.VarChar(100), rol)
+          .query(
+            "SELECT id_rol FROM [SQL_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
+          );
+        id_rol = result.recordset[0]?.id_rol || null;
+      }
     }
 
     const activo = estado === "Activo";
@@ -94,5 +107,29 @@ export async function actualizarUsuarioAction(formData: FormData) {
     }
 
     return { error: "Error inesperado al actualizar" };
+  }
+}
+//Forzar reseteo de contraseña
+export async function resetPasswordAction(id_usuario: string) {
+  try {
+    const nuevaPassword = "123456";
+    const hash = hashPassword(nuevaPassword);
+
+    const db = await connectToDB("");
+    if (!db) throw new Error("No se pudo conectar a la BD");
+
+    await db
+      .request()
+      .input("id", sql.UniqueIdentifier, id_usuario)
+      .input("pass", sql.VarChar(256), hash)
+      .query("UPDATE USUARIO SET contraseña = @pass WHERE id_usuario = @id");
+
+    return { success: true, password: nuevaPassword };
+  } catch (error: unknown) {
+    console.error("ERROR RESET PASSWORD:", error);
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
+    return { error: "Error inesperado al resetear contraseña" };
   }
 }

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { loginAction } from "@/app/lib/action/auth/login.action";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { IconAt, IconKey } from "@tabler/icons-react";
 
 interface LoginState {
@@ -73,6 +74,15 @@ export default function LoginForm() {
             </button>
           </div>
         </form>
+
+        <div className="text-center pb-4">
+          <Link
+            href="/login/olvide-contrasena"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useState, Fragment, useEffect } from "react";
 import { toast } from "react-toastify";
+import ConfirmationToast from "@/app/components/ConfirmationToast";
 import {
   buscarDecretosAction,
   liberarDecretoAction,
@@ -9,6 +10,7 @@ import {
   obtenerHistorialAction,
   buscarDecretosLiberadosAction,
 } from "@/app/lib/action/regularizar.action";
+import { IconReceipt } from "@tabler/icons-react";
 
 // Tipos
 interface DecretoBD {
@@ -73,7 +75,7 @@ export default function RegularizarFolioPage() {
   //  BUSCAR
   const handleBuscar = async () => {
     if (!anio || !numero) {
-      toast.warning("Debe ingresar Área, Año y Número.");
+      toast.warning("Debe ingresar Año y Numero de decreto para buscar.");
       return;
     }
 
@@ -129,28 +131,47 @@ export default function RegularizarFolioPage() {
       return;
     }
 
-    if (!confirm(`¿Desea LIBERAR el decreto N° ${d.NumeroDecreto}?`)) return;
-
-    try {
-      const res = await liberarDecretoAction(d.Ano_Proceso, d.NumeroDecreto);
-      if (res.success) {
-        toast.success("Decreto liberado exitosamente.");
-        // Actualizar tabla localmente
-        setDecretos((prev) =>
-          prev.map((item) =>
-            item.NumeroDecreto === d.NumeroDecreto
-              ? { ...item, SDF: "false" }
-              : item,
-          ),
-        );
-        cargarDecretosLiberados();
-      } else {
-        toast.error("No se pudo liberar el decreto.");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al liberar.");
-    }
+    toast(
+      ({ closeToast }) => (
+        <ConfirmationToast
+          message={`¿Desea LIBERAR el decreto N° ${d.NumeroDecreto}?`}
+          onConfirm={async () => {
+            try {
+              const res = await liberarDecretoAction(
+                d.Ano_Proceso,
+                d.NumeroDecreto,
+              );
+              if (res.success) {
+                toast.success("Decreto liberado exitosamente.");
+                // Actualizar tabla localmente
+                setDecretos((prev) =>
+                  prev.map((item) =>
+                    item.NumeroDecreto === d.NumeroDecreto
+                      ? { ...item, SDF: "false" }
+                      : item,
+                  ),
+                );
+                cargarDecretosLiberados();
+              } else {
+                toast.error("No se pudo liberar el decreto.");
+              }
+            } catch (e) {
+              console.error(e);
+              toast.error("Error al liberar.");
+            }
+          }}
+          closeToast={closeToast}
+        />
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "p-0 bg-transparent shadow-none",
+      },
+    );
   };
 
   // REGULARIZAR (Paso 2)
@@ -160,43 +181,63 @@ export default function RegularizarFolioPage() {
       return;
     }
 
-    if (
-      !confirm(
-        `¿Desea REGULARIZAR (Restaurar) el decreto N° ${d.NumeroDecreto}?`,
-      )
-    )
-      return;
-
-    try {
-      const res = await regularizarDecretoAction(
-        d.Ano_Proceso,
-        d.NumeroDecreto,
-      );
-      if (res.success) {
-        toast.success("Decreto regularizado exitosamente.");
-        // Actualizar tabla localmente (asumimos que vuelve a estado original, quitamos 'false')
-        setDecretos((prev) =>
-          prev.map((item) =>
-            item.NumeroDecreto === d.NumeroDecreto
-              ? { ...item, SDF: "NO LIBERADO" } // O el valor que corresponda
-              : item,
-          ),
-        );
-        cargarDecretosLiberados();
-      } else {
-        toast.error("No se pudo regularizar el decreto.");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al regularizar.");
-    }
+    toast(
+      ({ closeToast }) => (
+        <ConfirmationToast
+          message={`¿Desea REGULARIZAR (Restaurar) el decreto N° ${d.NumeroDecreto}?`}
+          onConfirm={async () => {
+            try {
+              const res = await regularizarDecretoAction(
+                d.Ano_Proceso,
+                d.NumeroDecreto,
+              );
+              if (res.success) {
+                toast.success("Decreto regularizado exitosamente.");
+                // Actualizar tabla localmente (asumimos que vuelve a estado original, quitamos 'false')
+                setDecretos((prev) =>
+                  prev.map((item) =>
+                    item.NumeroDecreto === d.NumeroDecreto
+                      ? { ...item, SDF: "NO LIBERADO" }
+                      : item,
+                  ),
+                );
+                cargarDecretosLiberados();
+              } else {
+                toast.error("No se pudo regularizar el decreto.");
+              }
+            } catch (e) {
+              console.error(e);
+              toast.error("Error al regularizar.");
+            }
+          }}
+          closeToast={closeToast}
+        />
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        hideProgressBar: true,
+        className: "p-0 bg-transparent shadow-none",
+      },
+    );
   };
 
   return (
-    <div className="mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        Regularización de Folio
-      </h1>
+    <div className="mx-auto py-10 w-[95%]">
+      {/* HEADER ESTILIZADO */}
+      <div className="text-center mb-10">
+        <div className="mx-auto h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+          <IconReceipt className="w-6 h-6 text-blue-600" />
+        </div>
+        <h2 className="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight">
+          Regularización de Folio
+        </h2>
+        <p className="mt-2 text-md text-slate-600">
+          Gestión y regularización de decretos municipales
+        </p>
+      </div>
 
       {/* FORMULARIO DE BÚSQUEDA */}
       <div className="bg-white shadow-md rounded-xl p-6 mb-8">
@@ -270,12 +311,9 @@ export default function RegularizarFolioPage() {
                     key={`${d.Codigo_Area}-${d.Ano_Proceso}-${d.NumeroDecreto}`}
                   >
                     <tr>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="font-bold text-gray-900">
                           {d.NumeroDecreto}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Año {d.Ano_Proceso}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -401,7 +439,7 @@ export default function RegularizarFolioPage() {
 
       {/* TABLA DE DECRETOS LIBERADOS (PENDIENTES) */}
       <div className="mt-12 mb-12">
-        <h2 className="text-xl font-bold mb-4 text-gray-700 border-b pb-2 ">
+        <h2 className="text-xl font-bold mb-4 text-gray-700 border-b pb-2 text-center">
           Decretos Pendientes de Regularizar (Liberados)
         </h2>
         {decretosLiberados.length === 0 ? (
@@ -445,9 +483,6 @@ export default function RegularizarFolioPage() {
                       <td className="px-6 py-4 whitespace-nowrap h-[110px]">
                         <div className="font-bold text-gray-900">
                           {d.NumeroDecreto}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Año {d.Ano_Proceso}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

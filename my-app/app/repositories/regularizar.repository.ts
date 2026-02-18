@@ -11,16 +11,12 @@ export interface DecretoDB {
   Monto: number;
   FechaDePago: Date;
   Glosa: string;
-  SDF: string; // 'false' or 'true' or other string values based on schema
+  SDF: string;
 }
 
 export class RegularizarRepository {
-  /**
-   * 6.1. Script de vista previa de registro del decreto de pago a liberar.
-   */
-  /**
-   * 6.1. Script de vista previa de registro del decreto de pago a liberar.
-   * Modificado para buscar múltiples decretos con filtros opcionales.
+  /*
+   6.1. Script de vista previa de registro del decreto de pago a liberar. Modificado para buscar múltiples decretos con filtros opcionales.
    */
   async findDecretos(anio: number, numero: number): Promise<DecretoDB[]> {
     const pool = await connectToDB("titular");
@@ -53,9 +49,7 @@ export class RegularizarRepository {
     return result.recordset || [];
   }
 
-  /**
-   * 6.2. Script que libera el decreto de pago.
-   * Sets SDF to 'false'.
+  /*6.2. Script que libera el decreto de pago. Sets SDF to 'false'.
    */
   async liberarDecreto(anio: number, numero: number): Promise<boolean> {
     const pool = await connectToDB("titular");
@@ -75,10 +69,7 @@ export class RegularizarRepository {
     return result.rowsAffected[0] > 0;
   }
 
-  /**
-   * 6.3. Script que vuelve decreto de pago a su estado original.
-   * Deletes the last state record if appropriate.
-   */
+  /*6.3. Script que vuelve decreto de pago a su estado original.Deletes the last state record if appropriate.*/
   async regularizarDecreto(anio: number, numero: number): Promise<boolean> {
     const pool = await connectToDB("titular");
     if (!pool) return false;
@@ -106,9 +97,7 @@ export class RegularizarRepository {
     return true;
   }
 
-  /**
-   * 6.4. Historial de estados del decreto.
-   */
+  /*6.4. Historial de estados del decreto.*/
   async findDecretoHistorico(
     anio: number,
     numero: number,
@@ -138,10 +127,7 @@ export class RegularizarRepository {
 
     return result.recordset || [];
   }
-  /**
-   * Busca decretos que están liberados (SDF = 'false') y pendientes de regularizar.
-   * Soporta paginación.
-   */
+  /* Busca decretos que están liberados (SDF = 'false') y pendientes de regularizar.Soporta paginación.*/
   async findDecretosLiberados(
     anio: number,
     page: number = 1,

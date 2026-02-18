@@ -370,3 +370,42 @@ export const sendRequestFinalizedWithChannel = async (
 
   return transporter.sendMail(message);
 };
+
+/**
+ * 8. Recuperar Contraseña
+ */
+export const sendPasswordResetEmail = async (
+  email: string,
+  token: string,
+  siteUrl: string = SITE_URL,
+) => {
+  const title = "Restablecer Contraseña";
+  const resetLink = `${siteUrl}/login/restablecer-contrasena?token=${token}`;
+
+  const content = `
+    <p>Hola,</p>
+    <p>Hemos recibido una solicitud para restablecer tu contraseña en el <strong>Sistema de Trámites Municipales</strong>.</p>
+    
+    <p>Para crear una nueva contraseña, haz clic en el siguiente botón:</p>
+    
+    <div style="margin: 35px 0; text-align: center;">
+      <a href="${resetLink}" style="display: inline-block; background-color: ${COLORS.primary}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Restablecer Contraseña</a>
+    </div>
+
+    <p style="font-size: 14px; color: ${COLORS.textMuted};">O copia y pega el siguiente enlace en tu navegador:</p>
+    <p style="font-size: 12px; color: ${COLORS.textMuted}; word-break: break-all;">${resetLink}</p>
+    
+    <div style="background-color: #fff1f2; border: 1px solid #fda4af; padding: 15px; margin: 25px 0; border-radius: 6px;">
+       <p style="margin: 0; color: #be123c; font-size: 13px;"><strong>Importante:</strong> Este enlace expirará en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña permanecerá segura.</p>
+    </div>
+  `;
+
+  const message = {
+    from: `${BRAND_NAME} <${CONTACT_EMAIL}>`,
+    to: email,
+    subject: `Restablecer Contraseña - ${BRAND_NAME}`,
+    html: getEmailTemplate(title, content),
+  };
+
+  return transporter.sendMail(message);
+};
