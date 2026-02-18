@@ -50,7 +50,7 @@ export default function IntercambiarTitularPage({ titular }: Props) {
             <IconSwitch className="w-6 h-6 text-blue-600" />
           </div>
           <h2 className="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight">
-            Gestión de Titularidad
+            Gestión de Titularidad DPW
           </h2>
           <p className="mt-2 text-md text-slate-600">
             Administra el titular actual habilitado para firmar documentos.

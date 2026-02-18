@@ -34,12 +34,10 @@ export async function crearUsuarioAction(formData: FormData) {
   try {
     const nombre = String(formData.get("nombre") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
-    const password = String(formData.get("password") ?? "").trim();
     const rol = String(formData.get("rol") ?? "").trim();
 
-    if (!password || password.length < 6) {
-      return { error: "La contraseña debe tener al menos 6 caracteres." };
-    }
+    // Generar contraseña aleatoria segura (8 caracteres)
+    const password = Math.random().toString(36).slice(-8);
 
     const usuario = email;
 
@@ -58,9 +56,21 @@ export async function crearUsuarioAction(formData: FormData) {
       id_rol,
     });
 
+    // Enviar correo de bienvenida con credenciales
+    try {
+      const { sendWelcomeEmail } = await import("@/app/lib/utils/email");
+      await sendWelcomeEmail(email, nombre, usuario, password);
+    } catch (emailError) {
+      console.error("Error enviando email de bienvenida:", emailError);
+      // No bloqueamos el flujo si falla el email, pero logueamos el error
+    }
+
     revalidatePath("/usuarios");
 
-    return { success: true };
+    return {
+      success: true,
+      message: "Usuario creado y credenciales enviadas por correo",
+    };
   } catch (error: unknown) {
     console.error("ERROR SERVER:", error);
 

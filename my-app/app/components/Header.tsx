@@ -17,7 +17,7 @@ export default function Header() {
             href="/"
             className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 hover:text-blue-600 transition"
           >
-            SQL <span className="text-blue-600">Interface</span>
+            APLI<span className="text-blue-600">CAS</span>
           </Link>
 
           {/* Zona derecha */}

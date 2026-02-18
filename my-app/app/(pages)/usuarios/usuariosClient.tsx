@@ -242,27 +242,40 @@ export default function UsuariosClient({ initialUsers }: Props) {
                     <button
                       className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-md text-xs transition"
                       title="Enviar correo de recuperación de contraseña"
-                      onClick={async () => {
-                        if (
-                          !confirm(
-                            `¿Generar nueva contraseña aleatoria y enviarla a ${user.name} (${user.email})?`,
-                          )
-                        )
-                          return;
+                      onClick={() => {
+                        toast(
+                          ({ closeToast }) => (
+                            <ConfirmationToast
+                              message={`¿Generar nueva contraseña aleatoria y enviarla a ${user.name} (${user.email})?`}
+                              onConfirm={async () => {
+                                const { enviarRecuperacionAction } =
+                                  await import("@/app/lib/action/auth/usuarios.action");
 
-                        const { enviarRecuperacionAction } =
-                          await import("@/app/lib/action/auth/usuarios.action");
+                                toast.info("Enviando correo...");
+                                const result = await enviarRecuperacionAction(
+                                  user.email,
+                                );
 
-                        toast.info("Enviando correo...");
-                        const result = await enviarRecuperacionAction(
-                          user.email,
+                                if (result.success) {
+                                  toast.success(result.message);
+                                } else {
+                                  toast.error(
+                                    result.error || "Error al enviar correo",
+                                  );
+                                }
+                              }}
+                              closeToast={closeToast}
+                            />
+                          ),
+                          {
+                            position: "top-center",
+                            autoClose: false,
+                            closeOnClick: false,
+                            draggable: false,
+                            hideProgressBar: true,
+                            className: "p-0 bg-transparent shadow-none",
+                          },
                         );
-
-                        if (result.success) {
-                          toast.success(result.message);
-                        } else {
-                          toast.error(result.error || "Error al enviar correo");
-                        }
                       }}
                     >
                       Recuperar
@@ -372,31 +385,11 @@ export default function UsuariosClient({ initialUsers }: Props) {
               </div>
 
               {!isEditing && (
-                <div>
-                  <label className="block mb-1 text-sm font-medium">
-                    Contraseña
-                  </label>
-                  <input
-                    name="password"
-                    type="text"
-                    value={password}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPassword(val);
-                      setErrors((prev) => ({
-                        ...prev,
-                        password: val.length < 6 ? "Mínimo 6 caracteres" : "",
-                      }));
-                    }}
-                    placeholder="Mínimo 6 caracteres"
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  {errors.password && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.password}
-                    </p>
-                  )}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Nota:</strong> La contraseña será generada
+                    automáticamente y enviada al correo del usuario.
+                  </p>
                 </div>
               )}
 

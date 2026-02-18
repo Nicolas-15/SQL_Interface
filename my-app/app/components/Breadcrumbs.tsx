@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { IconChevronRight, IconHome } from "@tabler/icons-react";
 
 const routeLabels: Record<string, string> = {
-  consultas: "Gestión Financiera",
+  consultas: "Consultas",
   usuarios: "Usuarios",
   titulares: "Firmantes",
   "intercambiar-titular": "Intercambiar Titular",

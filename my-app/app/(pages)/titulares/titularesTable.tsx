@@ -14,7 +14,7 @@ type Props = {
 
 // Diccionario de roles (UUID -> nombre legible)
 const rolesMap: Record<string, string> = {
-  "6F5E7B5A-689D-472E-92F4-34F729504107": "Administradora",
+  "6F5E7B5A-689D-472E-92F4-34F729504107": "Administrador/a",
   "F93A2508-AAF6-4E77-A5B5-382FCB8416D9": "Alcalde",
 };
 

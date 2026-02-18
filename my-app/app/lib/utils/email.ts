@@ -11,8 +11,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const BRAND_NAME = "SQL Interface | Municipalidad El Quisco";
-const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
+const BRAND_NAME = "Aplicas | Municipalidad El Quisco";
+const SITE_URL = process.env.SITE_URL || "https://aplicas.elquisco.cl";
 const CONTACT_EMAIL = process.env.EMAIL_FROM;
 
 // Brand Colors
@@ -442,6 +442,55 @@ export const sendNewPasswordEmail = async (
     from: `${BRAND_NAME} <${CONTACT_EMAIL}>`,
     to: email,
     subject: `Nueva Contraseña - ${BRAND_NAME}`,
+    html: getEmailTemplate(title, content),
+  };
+
+  return transporter.sendMail(message);
+};
+
+/**
+ * 10. Enviar Credenciales de Bienvenida (Nuevo Usuario)
+ */
+export const sendWelcomeEmail = async (
+  email: string,
+  name: string,
+  username: string,
+  password: string,
+) => {
+  const title = "Bienvenido al Sistema de Trámites";
+
+  const content = `
+    <p>Hola <strong>${name}</strong>,</p>
+    <p>Tu cuenta ha sido creada exitosamente en el <strong>Sistema de Trámites Municipales</strong>.</p>
+    
+    <p>A continuación tus credenciales de acceso:</p>
+    
+    <div style="margin: 25px 0; border: 1px solid ${COLORS.border}; border-radius: 8px; overflow: hidden;">
+       <div style="background-color: #f8fafc; padding: 12px 20px; border-bottom: 1px solid ${COLORS.border};">
+         <span style="font-weight: 600; color: ${COLORS.textMuted}; font-size: 13px;">CREDENCIALES</span>
+       </div>
+       <div style="padding: 20px;">
+          <p style="margin: 0 0 5px; color: ${COLORS.textMuted}; font-size: 14px;">Usuario / Email</p>
+          <p style="margin: 0 0 15px; color: ${COLORS.text}; font-weight: 600; font-size: 16px;">${username}</p>
+          
+          <p style="margin: 0 0 5px; color: ${COLORS.textMuted}; font-size: 14px;">Contraseña Temporal</p>
+          <span style="display: inline-block; background-color: #f0fdf4; color: #166534; padding: 8px 15px; border: 1px dashed #16a34a; border-radius: 6px; font-weight: 700; font-size: 18px; letter-spacing: 1px;">${password}</span>
+       </div>
+    </div>
+
+    <div style="background-color: #fffbeb; border: 1px solid #fcd34d; padding: 15px; margin: 25px 0; border-radius: 6px;">
+       <p style="margin: 0; color: #92400e; font-size: 13px;"><strong>Importante:</strong> Por su seguridad, le recomendamos cambiar esta contraseña al iniciar sesión por primera vez.</p>
+    </div>
+    
+    <div style="margin-top: 35px; text-align: center;">
+      <a href="${SITE_URL}/login" style="display: inline-block; background-color: ${COLORS.primary}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">Ir al Sistema</a>
+    </div>
+  `;
+
+  const message = {
+    from: `${BRAND_NAME} <${CONTACT_EMAIL}>`,
+    to: email,
+    subject: `Bienvenido - Credenciales de Acceso - ${BRAND_NAME}`,
     html: getEmailTemplate(title, content),
   };
 

@@ -97,6 +97,18 @@ const columnasDisponibles: (keyof Reporte)[] = [
   "Numero_Motor",
 ];
 
+const columnasPorDefecto: (keyof Reporte)[] = [
+  "Comuna",
+  "Placa",
+  "Digito",
+  "Forma_de_Pago",
+  "Codigo_SII",
+  "Comuna_Anterior",
+  "Codigo_Comuna_Ant",
+  "Fecha_Pago",
+  "Total_a_Pagar",
+];
+
 export default function ReporteTransparenciaClient() {
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
@@ -106,7 +118,7 @@ export default function ReporteTransparenciaClient() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [columnasSeleccionadas, setColumnasSeleccionadas] =
-    useState<(keyof Reporte)[]>(columnasDisponibles);
+    useState<(keyof Reporte)[]>(columnasPorDefecto);
   const [hasSearched, setHasSearched] = useState(false);
   const [rangoDisponible, setRangoDisponible] = useState<{
     min: string | null;
@@ -192,11 +204,16 @@ export default function ReporteTransparenciaClient() {
         const worksheet = workbook.addWorksheet("Reporte");
 
         // Definir columnas
-        worksheet.columns = columnasSeleccionadas.map((col) => ({
-          header: col.replace(/_/g, " "),
-          key: col,
-          width: 20,
-        }));
+        worksheet.columns = columnasSeleccionadas.map((col) => {
+          let header = col.replace(/_/g, " ");
+          if (col === "Total_a_Pagar") header = "Total Pagado";
+
+          return {
+            header,
+            key: col,
+            width: 20,
+          };
+        });
 
         // Agregar filas
         worksheet.addRows(reportes);
@@ -530,7 +547,9 @@ export default function ReporteTransparenciaClient() {
                       key={col}
                       className="px-4 py-3 text-left font-semibold text-gray-600 whitespace-nowrap bg-gray-100 border-b min-w-[150px]"
                     >
-                      {col.replace(/_/g, " ")}
+                      {col === "Total_a_Pagar"
+                        ? "Total Pagado"
+                        : col.replace(/_/g, " ")}
                     </th>
                   ))}
                 </tr>
