@@ -1,29 +1,19 @@
 // app/home/page.tsx
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { IconUsers, IconNews, IconDatabase } from "@tabler/icons-react";
-import { verificarJWT } from "@/app/lib/utils/jwt";
 import { getCardsHome } from "@/app/lib/utils/roles.config";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
 
 export default async function HomePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  const sessionUser = await getSessionUserAction();
 
-  if (!token) {
+  if (!sessionUser) {
     redirect("/login");
   }
 
-  let userName = "";
-  let nombreRol: string | null = null;
-  try {
-    const payload = verificarJWT(token) as {
-      nombre?: string;
-      nombre_rol?: string | null;
-    };
-    userName = payload.nombre || "";
-    nombreRol = payload.nombre_rol || null;
-  } catch {}
+  const userName = sessionUser.nombre;
+  const nombreRol = sessionUser.nombre_rol;
 
   const now = new Date();
   const fecha = now.toLocaleDateString("es-CL", {

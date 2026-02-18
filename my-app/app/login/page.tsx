@@ -1,15 +1,16 @@
 // app/login/page.tsx
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import LoginForm from "./loginForm";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
 
 export default async function LoginPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  // Solo redirigir si hay un usuario válido Y activo
+  const sessionUser = await getSessionUserAction();
 
-  if (token) {
-    redirect("/"); // ya logueado → redirige al dashboard
+  if (sessionUser) {
+    redirect("/");
   }
 
+  // Sin token, token inválido, o usuario inactivo → mostrar login
   return <LoginForm />;
 }

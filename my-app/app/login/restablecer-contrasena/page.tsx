@@ -8,37 +8,12 @@ import { IconLock, IconCheck, IconX } from "@tabler/icons-react";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const emailParam = searchParams.get("email") || "";
 
   const [state, action, isPending] = useActionState(resetPasswordAction, {
     success: false,
     message: "",
   });
-
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-          <div className="inline-flex p-3 bg-red-100 text-red-600 rounded-full mb-4">
-            <IconX className="w-8 h-8" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
-            Enlace inválido
-          </h1>
-          <p className="text-gray-500 mb-6">
-            No se ha proporcionado un token válido para restablecer la
-            contraseña.
-          </p>
-          <Link
-            href="/login"
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Ir al inicio de sesión
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (state.success) {
     return (
@@ -72,12 +47,51 @@ function ResetPasswordForm() {
             Nueva Contraseña
           </h1>
           <p className="text-gray-500 text-sm">
-            Ingresa tu nueva contraseña para acceder a tu cuenta.
+            Ingresa el código que enviamos a tu correo y tu nueva contraseña.
           </p>
         </div>
 
         <form action={action} className="space-y-5">
-          <input type="hidden" name="token" value={token} />
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Correo Electrónico
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              defaultValue={emailParam}
+              readOnly={!!emailParam}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition ${
+                emailParam
+                  ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                  : "focus:ring-2 focus:ring-blue-500"
+              }`}
+              required
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="code"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Código de Verificación (6 dígitos)
+            </label>
+            <input
+              id="code"
+              name="code"
+              type="text"
+              placeholder="123456"
+              maxLength={6}
+              pattern="\d{6}"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-mono text-center tracking-widest text-lg"
+              required
+            />
+          </div>
 
           {state.message && !state.success && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm text-center">

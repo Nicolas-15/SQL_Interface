@@ -2,15 +2,25 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@/app/context/UserContext";
+import { tieneAcceso } from "@/app/lib/utils/roles.config";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user } = useUser();
 
-  const links = [
+  const allLinks = [
     { href: "/consultas", label: "Consultas" },
     { href: "/usuarios", label: "Usuarios" },
     { href: "/titulares", label: "Titulares" },
   ];
+
+  // Filtrar links según el rol del usuario
+  const links = allLinks.filter((link) =>
+    tieneAcceso(user?.nombre_rol ?? null, link.href),
+  );
+
+  if (links.length === 0) return null;
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm">

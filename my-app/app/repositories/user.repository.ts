@@ -19,6 +19,7 @@ export interface CrearUsuarioDB {
   usuario: string;
   contraseña: string;
   email: string;
+  id_rol?: string | null;
 }
 
 export class UsuarioRepository {
@@ -75,15 +76,17 @@ export class UsuarioRepository {
     const result = await pool.request().input("id", sql.UniqueIdentifier, id)
       .query(`
         SELECT TOP 1
-          id_usuario,
-          nombre,
-          usuario,
-          contraseña,
-          email,
-          activo,
-          id_rol
-        FROM usuario
-        WHERE id_usuario = @id
+          u.id_usuario,
+          u.nombre,
+          u.usuario,
+          u.contraseña,
+          u.email,
+          u.activo,
+          u.id_rol,
+          r.nombre_rol
+        FROM USUARIO u
+        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        WHERE u.id_usuario = @id
       `);
 
     return result.recordset[0] ?? null;
@@ -100,9 +103,10 @@ export class UsuarioRepository {
       .input("nombre", sql.VarChar, data.nombre)
       .input("usuario", sql.VarChar, data.usuario)
       .input("contraseña", sql.VarChar, data.contraseña)
-      .input("email", sql.VarChar, data.email).query(`
+      .input("email", sql.VarChar, data.email)
+      .input("id_rol", sql.UniqueIdentifier, data.id_rol ?? null).query(`
             INSERT INTO usuario
-                (nombre,usuario,contraseña,email)
+                (nombre,usuario,contraseña,email,id_rol)
             OUTPUT
                 INSERTED.id_usuario,
                 INSERTED.nombre,
@@ -112,7 +116,7 @@ export class UsuarioRepository {
                 INSERTED.activo,
                 INSERTED.id_rol
             VALUES
-                (@nombre,@usuario,@contraseña,@email)
+                (@nombre,@usuario,@contraseña,@email,@id_rol)
             `);
     return result.recordset[0];
   }
@@ -130,6 +134,32 @@ export class UsuarioRepository {
         SET activo = @activo
         WHERE id_usuario = @id
         `);
+  }
+
+  /*Buscar id_rol por nombre_rol*/
+  async findRolByName(nombreRol: string): Promise<string | null> {
+    const pool = await connectToDB("");
+    if (!pool) return null;
+
+    const result = await pool
+      .request()
+      .input("nombre_rol", sql.VarChar(100), nombreRol)
+      .query(
+        "SELECT TOP 1 id_rol FROM [SQL_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
+      );
+
+    return result.recordset[0]?.id_rol ?? null;
+  }
+
+  /*Eliminar usuario de la BD*/
+  async deleteById(idUsuario: string): Promise<void> {
+    const pool = await connectToDB("");
+    if (!pool) return;
+
+    await pool
+      .request()
+      .input("id", sql.UniqueIdentifier, idUsuario)
+      .query("DELETE FROM usuario WHERE id_usuario = @id");
   }
   /* Setear Token */
   async setRecoveryToken(
@@ -152,13 +182,18 @@ export class UsuarioRepository {
       `);
   }
 
-  /* Verificar Token */
-  async findByToken(token: string): Promise<UsuarioDB | null> {
+  /* Verificar Token (Código de 6 dígitos) + Email */
+  async findByEmailAndCode(
+    email: string,
+    code: string,
+  ): Promise<UsuarioDB | null> {
     const pool = await connectToDB("");
     if (!pool) return null;
 
-    const result = await pool.request().input("codigo", sql.VarChar(255), token)
-      .query(`
+    const result = await pool
+      .request()
+      .input("email", sql.VarChar(100), email)
+      .input("codigo", sql.VarChar(255), code).query(`
         SELECT TOP 1
           id_usuario,
           nombre,
@@ -170,7 +205,8 @@ export class UsuarioRepository {
           codigo,
           fecha_expiracion
         FROM USUARIO
-        WHERE codigo = @codigo
+        WHERE email = @email
+          AND codigo = @codigo
           AND fecha_expiracion > GETDATE()
       `);
 

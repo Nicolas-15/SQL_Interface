@@ -1,19 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { logoutAction } from "@/app/lib/action/auth/logout.action";
 import { IconLogout } from "@tabler/icons-react";
 import { useState } from "react";
+import { useUser } from "@/app/context/UserContext";
 
 export default function LogoutButton() {
-  const router = useRouter();
+  const { logout } = useUser();
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
     setLoading(true);
-    await logoutAction();
-    router.push("/login");
+    await logout();
   };
 
   return (

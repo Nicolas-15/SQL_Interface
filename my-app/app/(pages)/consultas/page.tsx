@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   IconSwitch,
@@ -9,8 +9,8 @@ import {
   IconReceiptDollar,
   IconLock,
 } from "@tabler/icons-react";
-import { verificarJWT } from "@/app/lib/utils/jwt";
 import { getModulosConsultas } from "@/app/lib/utils/roles.config";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
 
 const iconMap: Record<string, React.ReactNode> = {
   blue: (
@@ -41,16 +41,13 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default async function Consultas() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
+  const sessionUser = await getSessionUserAction();
 
-  let nombreRol: string | null = null;
-  if (token) {
-    try {
-      const payload = verificarJWT(token) as { nombre_rol?: string | null };
-      nombreRol = payload.nombre_rol || null;
-    } catch {}
+  if (!sessionUser) {
+    redirect("/login");
   }
+
+  const nombreRol = sessionUser.nombre_rol;
 
   const modulos = getModulosConsultas(nombreRol);
 

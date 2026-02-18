@@ -7,6 +7,8 @@ import {
   eliminarUsuarioAction,
 } from "@/app/lib/action/auth/usuarios.action";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/context/UserContext";
+import { ROLES_LIST, ROLE_LABELS } from "@/app/lib/utils/roles.config";
 
 import { toast } from "react-toastify";
 import ConfirmationToast from "@/app/components/ConfirmationToast";
@@ -25,11 +27,13 @@ interface Props {
 
 export default function UsuariosClient({ initialUsers }: Props) {
   const router = useRouter();
+  const { refreshUser } = useUser();
 
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [tempUser, setTempUser] = useState<User | null>(null);
-  const [errors, setErrors] = useState({ name: "", email: "" });
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({ name: "", email: "", password: "" });
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
@@ -82,18 +86,20 @@ export default function UsuariosClient({ initialUsers }: Props) {
       id: "",
       name: "",
       email: "",
-      rol: "Viewer",
+      rol: "admin",
       estado: "Activo",
     });
 
-    setErrors({ name: "", email: "" });
+    setPassword("");
+    setErrors({ name: "", email: "", password: "" });
     setIsEditing(false);
     setShowModal(true);
   };
 
   const handleEditUser = (user: User) => {
     setTempUser({ ...user });
-    setErrors({ name: "", email: "" });
+    setPassword("");
+    setErrors({ name: "", email: "", password: "" });
     setIsEditing(true);
     setShowModal(true);
   };
@@ -102,7 +108,7 @@ export default function UsuariosClient({ initialUsers }: Props) {
     toast(
       ({ closeToast }) => (
         <ConfirmationToast
-          message="¿Eliminar este usuario?"
+          message="¿Eliminar este usuario? Si tiene registros de auditoría, será desactivado."
           onConfirm={async () => {
             const result = await eliminarUsuarioAction(id);
 
@@ -111,9 +117,11 @@ export default function UsuariosClient({ initialUsers }: Props) {
               return;
             }
 
-            setUsers((prev) => prev.filter((u) => u.id !== id));
+            await refreshUser();
             router.refresh();
-            toast.success("Usuario eliminado correctamente");
+            toast.info(result.message || "Operación completada", {
+              autoClose: 5000,
+            });
           }}
           closeToast={closeToast}
         />
@@ -233,28 +241,32 @@ export default function UsuariosClient({ initialUsers }: Props) {
 
                     <button
                       className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-md text-xs transition"
+                      title="Enviar correo de recuperación de contraseña"
                       onClick={async () => {
                         if (
                           !confirm(
-                            `¿Resetear la contraseña de ${user.name} a "123456"?`,
+                            `¿Generar nueva contraseña aleatoria y enviarla a ${user.name} (${user.email})?`,
                           )
                         )
                           return;
-                        const { resetPasswordAction } =
+
+                        const { enviarRecuperacionAction } =
                           await import("@/app/lib/action/auth/usuarios.action");
-                        const result = await resetPasswordAction(user.id);
+
+                        toast.info("Enviando correo...");
+                        const result = await enviarRecuperacionAction(
+                          user.email,
+                        );
+
                         if (result.success) {
-                          toast.success(
-                            `Contraseña reseteada a: ${result.password}`,
-                          );
+                          toast.success(result.message);
                         } else {
-                          toast.error(result.error || "Error al resetear");
+                          toast.error(result.error || "Error al enviar correo");
                         }
                       }}
                     >
-                      Resetear
+                      Recuperar
                     </button>
-
                     <button
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs transition"
                       onClick={() => handleDeleteUser(user.id)}
@@ -306,6 +318,7 @@ export default function UsuariosClient({ initialUsers }: Props) {
                         }
 
                         setShowModal(false);
+                        await refreshUser();
                         router.refresh();
                         toast.success(
                           isEditing
@@ -358,6 +371,35 @@ export default function UsuariosClient({ initialUsers }: Props) {
                 )}
               </div>
 
+              {!isEditing && (
+                <div>
+                  <label className="block mb-1 text-sm font-medium">
+                    Contraseña
+                  </label>
+                  <input
+                    name="password"
+                    type="text"
+                    value={password}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPassword(val);
+                      setErrors((prev) => ({
+                        ...prev,
+                        password: val.length < 6 ? "Mínimo 6 caracteres" : "",
+                      }));
+                    }}
+                    placeholder="Mínimo 6 caracteres"
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  {errors.password && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block mb-1 text-sm font-medium">Rol</label>
                 <select
@@ -368,14 +410,11 @@ export default function UsuariosClient({ initialUsers }: Props) {
                   }
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="admin">Admin</option>
-                  <option value="Soporte">Soporte</option>
-                  <option value="Tesorería">Tesorería</option>
-                  <option value="Tránsito">Tránsito</option>
-                  <option value="Finanzas">Finanzas</option>
-                  <option value="administrador municipal">
-                    Adm. Municipal
-                  </option>
+                  {ROLES_LIST.map((rol) => (
+                    <option key={rol} value={rol}>
+                      {ROLE_LABELS[rol]}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -1,7 +1,7 @@
 /**
  * Configuración centralizada de roles y permisos.
- *
- * Los nombres DEBEN coincidir exactamente con nombre_rol en la tabla [rol].
+ * Los nombres DEBEN coincidir EXACTAMENTE con nombre_rol en la tabla [rol].
+ * Roles en la DB:admin, Soporte, Tesorería, Tránsito, Finanzas, Adm. Municipal
  */
 
 // Nombres de roles tal como están en la BD
@@ -11,7 +11,7 @@ export const ROLES = {
   TESORERIA: "Tesorería",
   TRANSITO: "Tránsito",
   FINANZAS: "Finanzas",
-  ADMINISTRACION_MUNICIPAL: "administrador municipal",
+  ADMINISTRACION_MUNICIPAL: "Adm.Titular",
 } as const;
 
 // Lista de roles asignables para dropdowns
@@ -31,16 +31,27 @@ export const ROLE_LABELS: Record<string, string> = {
   [ROLES.TESORERIA]: "Tesorería",
   [ROLES.TRANSITO]: "Tránsito",
   [ROLES.FINANZAS]: "Finanzas",
-  [ROLES.ADMINISTRACION_MUNICIPAL]: "Adm. Municipal",
+  [ROLES.ADMINISTRACION_MUNICIPAL]: "Adm.Titular",
 };
 
+// ──────────────────────────────────────────────────────────────
 // Rutas permitidas por rol (admin tiene acceso total)
+//
+// ADMIN          → Todo
+// SOPORTE        → Módulo gestión financiera completo (sin usuarios ni titulares)
+// TESORERÍA      → Solo regularización de pagos (aún no implementado)
+// TRÁNSITO       → Solo reporte de transparencia PC
+// FINANZAS       → Solo regularización por folio y decretos
+// ADM. MUNICIPAL → Solo intercambiar titularidad
+// ──────────────────────────────────────────────────────────────
 const rutasPermitidas: Record<string, string[]> = {
   [ROLES.SOPORTE]: [
     "/consultas",
     "/consultas/intercambiar-titular",
     "/consultas/reporte-transparencia",
     "/consultas/regularizar-folio",
+    "/consultas/pagos-inconclusos",
+    "/consultas/gestion-cas",
   ],
   [ROLES.TESORERIA]: ["/consultas", "/consultas/pagos-inconclusos"],
   [ROLES.TRANSITO]: ["/consultas", "/consultas/reporte-transparencia"],

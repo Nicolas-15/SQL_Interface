@@ -11,8 +11,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const BRAND_NAME = "Tramites | Municipalidad El Quisco";
-const SITE_URL = "https://tramites.munielquisco.gob.cl";
+const BRAND_NAME = "SQL Interface | Municipalidad El Quisco";
+const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
 const CONTACT_EMAIL = process.env.EMAIL_FROM;
 
 // Brand Colors
@@ -374,36 +374,74 @@ export const sendRequestFinalizedWithChannel = async (
 /**
  * 8. Recuperar Contraseña
  */
-export const sendPasswordResetEmail = async (
+/**
+ * 8. Enviar Código de Verificación (6 dígitos)
+ */
+export const sendVerificationCodeEmail = async (
   email: string,
-  token: string,
-  siteUrl: string = SITE_URL,
+  code: string,
+  name: string,
 ) => {
-  const title = "Restablecer Contraseña";
-  const resetLink = `${siteUrl}/login/restablecer-contrasena?token=${token}`;
+  const title = "Tu Código de Recuperación";
 
   const content = `
-    <p>Hola,</p>
+    <p>Hola <strong>${name}</strong>,</p>
     <p>Hemos recibido una solicitud para restablecer tu contraseña en el <strong>Sistema de Trámites Municipales</strong>.</p>
     
-    <p>Para crear una nueva contraseña, haz clic en el siguiente botón:</p>
+    <p>Usa el siguiente código para completar el proceso:</p>
     
     <div style="margin: 35px 0; text-align: center;">
-      <a href="${resetLink}" style="display: inline-block; background-color: ${COLORS.primary}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Restablecer Contraseña</a>
+      <span style="display: inline-block; background-color: #eff6ff; color: ${COLORS.primary}; padding: 15px 30px; border: 2px dashed ${COLORS.primary}; border-radius: 8px; font-weight: 700; font-size: 32px; letter-spacing: 5px;">${code}</span>
     </div>
 
-    <p style="font-size: 14px; color: ${COLORS.textMuted};">O copia y pega el siguiente enlace en tu navegador:</p>
-    <p style="font-size: 12px; color: ${COLORS.textMuted}; word-break: break-all;">${resetLink}</p>
-    
     <div style="background-color: #fff1f2; border: 1px solid #fda4af; padding: 15px; margin: 25px 0; border-radius: 6px;">
-       <p style="margin: 0; color: #be123c; font-size: 13px;"><strong>Importante:</strong> Este enlace expirará en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña permanecerá segura.</p>
+       <p style="margin: 0; color: #be123c; font-size: 13px;"><strong>Importante:</strong> Este código expirará en 1 hora. Si no solicitaste este cambio, ignora este correo.</p>
     </div>
   `;
 
   const message = {
     from: `${BRAND_NAME} <${CONTACT_EMAIL}>`,
     to: email,
-    subject: `Restablecer Contraseña - ${BRAND_NAME}`,
+    subject: `Código de Recuperación: ${code} - ${BRAND_NAME}`,
+    html: getEmailTemplate(title, content),
+  };
+
+  return transporter.sendMail(message);
+};
+
+/**
+ * 9. Enviar Nueva Contraseña (Admin Reset)
+ */
+export const sendNewPasswordEmail = async (
+  email: string,
+  name: string,
+  password: string,
+) => {
+  const title = "Tu Contraseña ha sido Restablecida";
+
+  const content = `
+    <p>Hola <strong>${name}</strong>,</p>
+    <p>Un administrador ha restablecido tu contraseña en el <strong>Sistema de Trámites Municipales</strong>.</p>
+    
+    <p>Tu nueva contraseña temporal es:</p>
+    
+    <div style="margin: 35px 0; text-align: center;">
+      <span style="display: inline-block; background-color: #f0fdf4; color: #166534; padding: 15px 30px; border: 2px dashed #16a34a; border-radius: 8px; font-weight: 700; font-size: 24px; letter-spacing: 2px;">${password}</span>
+    </div>
+
+    <div style="background-color: #fffbeb; border: 1px solid #fcd34d; padding: 15px; margin: 25px 0; border-radius: 6px;">
+       <p style="margin: 0; color: #92400e; font-size: 13px;"><strong>Recomendación:</strong> Te sugerimos cambiar esta contraseña inmediatamente después de iniciar sesión.</p>
+    </div>
+    
+    <div style="margin-top: 35px; text-align: center;">
+      <a href="${SITE_URL}/login" style="display: inline-block; background-color: ${COLORS.primary}; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">Iniciar Sesión</a>
+    </div>
+  `;
+
+  const message = {
+    from: `${BRAND_NAME} <${CONTACT_EMAIL}>`,
+    to: email,
+    subject: `Nueva Contraseña - ${BRAND_NAME}`,
     html: getEmailTemplate(title, content),
   };
 

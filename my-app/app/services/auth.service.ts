@@ -77,42 +77,44 @@ export class AuthService {
     };
   }
   /*Solicitud de restablecimiento de contraseña*/
-  async requestPasswordReset(email: string): Promise<void> {
+  async requestPasswordReset(email: string, siteUrl?: string): Promise<void> {
     //1) Buscar usuario por email
     const usuario = await this.usuarioRepo.findByEmail(email);
     if (!usuario) {
-      // Por seguridad, no indicamos si el email existe o no, pero logueamos
       console.log(`Password reset requested for non-existent email: ${email}`);
       return;
     }
 
-    //2) Generar token y fecha expiración
-    const token = crypto.randomUUID();
+    //2) Generar código de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiration = new Date();
     expiration.setTime(expiration.getTime() + 60 * 60 * 1000); // 1 hora
 
     //3) Guardar en BD
-    await this.usuarioRepo.setRecoveryToken(email, token, expiration);
+    await this.usuarioRepo.setRecoveryToken(email, code, expiration);
 
     //4) Enviar email
-    const { sendPasswordResetEmail } = await import("../lib/utils/email");
-    await sendPasswordResetEmail(email, token);
+    const { sendVerificationCodeEmail } = await import("../lib/utils/email");
+    await sendVerificationCodeEmail(email, code, usuario.nombre);
 
     //5) Auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
       registro: "PASSWORD_RESET_REQUEST",
-      descripcion: "Solicitud de recuperación de contraseña",
+      descripcion: "Solicitud de recuperación de contraseña (Código)",
     });
   }
 
-  /*Restablecimiento de contraseña*/
-
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    //1) Verificar token
-    const usuario = await this.usuarioRepo.findByToken(token);
+  /*Restablecimiento de contraseña con Código*/
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<void> {
+    //1) Verificar email + código
+    const usuario = await this.usuarioRepo.findByEmailAndCode(email, code);
     if (!usuario) {
-      throw new Error("TOKEN_INVALIDO_O_EXPIRADO");
+      throw new Error("CODIGO_INVALIDO_O_EXPIRADO");
     }
 
     //2) Hash nueva password

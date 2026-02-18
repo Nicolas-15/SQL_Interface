@@ -1,6 +1,7 @@
 "use server";
 
 import { UsuarioService } from "@/app/services/usuario.service";
+import { UsuarioRepository } from "@/app/repositories/user.repository";
 import { revalidatePath } from "next/cache";
 import { hashPassword } from "@/app/lib/utils/hash";
 import { connectToDB } from "@/app/lib/utils/db-connection";
@@ -12,14 +13,19 @@ export async function eliminarUsuarioAction(id: string) {
   try {
     await usuarioService.eliminarUsuario(id);
     revalidatePath("/usuarios");
-    return { success: true };
+    return { success: true, message: "Usuario eliminado de la base de datos" };
   } catch (error: unknown) {
-    console.error("ERROR DELETE:", error);
-
     if (error instanceof Error) {
+      if (error.message === "USUARIO_DESACTIVADO") {
+        revalidatePath("/usuarios");
+        return {
+          success: true,
+          message:
+            "El usuario tiene registros de auditoría y no se puede eliminar. Fue desactivado.",
+        };
+      }
       return { error: error.message };
     }
-
     return { error: "Error inesperado al eliminar" };
   }
 }
@@ -28,15 +34,28 @@ export async function crearUsuarioAction(formData: FormData) {
   try {
     const nombre = String(formData.get("nombre") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+    const rol = String(formData.get("rol") ?? "").trim();
+
+    if (!password || password.length < 6) {
+      return { error: "La contraseña debe tener al menos 6 caracteres." };
+    }
 
     const usuario = email;
-    const password = "123456";
+
+    // Buscar id_rol a partir del nombre_rol
+    let id_rol: string | null = null;
+    if (rol) {
+      const repo = new UsuarioRepository();
+      id_rol = await repo.findRolByName(rol);
+    }
 
     await usuarioService.crearUsuario({
       nombre,
       usuario,
       email,
       password,
+      id_rol,
     });
 
     revalidatePath("/usuarios");
@@ -96,6 +115,46 @@ export async function actualizarUsuarioAction(formData: FormData) {
       activo,
     });
 
+    // Si el usuario editado es el usuario logueado, regenerar el JWT
+    const { cookies } = await import("next/headers");
+    const { verificarJWT, generarJWT } = await import("@/app/lib/utils/jwt");
+    const { UsuarioRepository } =
+      await import("@/app/repositories/user.repository");
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
+
+    if (token) {
+      try {
+        const payload = verificarJWT(token) as { id_usuario?: string };
+        if (payload.id_usuario === id_usuario) {
+          // Es el mismo usuario logueado — regenerar JWT con datos frescos
+          const repo = new UsuarioRepository();
+          const usuarioFresco = await repo.findById(id_usuario);
+          if (usuarioFresco) {
+            const nuevoToken = generarJWT({
+              id_usuario: usuarioFresco.id_usuario,
+              nombre: usuarioFresco.nombre,
+              usuario: usuarioFresco.usuario,
+              email: usuarioFresco.email,
+              id_rol: usuarioFresco.id_rol,
+              nombre_rol: usuarioFresco.nombre_rol,
+            });
+
+            cookieStore.set({
+              name: "auth_token",
+              value: nuevoToken,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "strict",
+              path: "/",
+              maxAge: 60 * 60,
+            });
+          }
+        }
+      } catch {}
+    }
+
     revalidatePath("/usuarios");
 
     return { success: true };
@@ -109,27 +168,50 @@ export async function actualizarUsuarioAction(formData: FormData) {
     return { error: "Error inesperado al actualizar" };
   }
 }
-//Forzar reseteo de contraseña
-export async function resetPasswordAction(id_usuario: string) {
+// Enviar correo con nueva contraseña aleatoria (Admin Reset)
+export async function enviarRecuperacionAction(email: string) {
   try {
-    const nuevaPassword = "123456";
-    const hash = hashPassword(nuevaPassword);
-
+    const { connectToDB } = await import("@/app/lib/utils/db-connection");
+    const sql = (await import("mssql")).default;
+    const { sendNewPasswordEmail } = await import("@/app/lib/utils/email");
     const db = await connectToDB("");
+
     if (!db) throw new Error("No se pudo conectar a la BD");
 
+    // 1. Buscar usuario para obtener ID y Nombre
+    const userResult = await db
+      .request()
+      .input("email", sql.VarChar(100), email)
+      .query("SELECT id_usuario, nombre FROM USUARIO WHERE email = @email");
+
+    const user = userResult.recordset[0];
+    if (!user) throw new Error("Usuario no encontrado");
+
+    // 2. Generar contraseña aleatoria (8 caracteres)
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hash = hashPassword(newPassword);
+
+    // 3. Actualizar contraseña en BD
     await db
       .request()
-      .input("id", sql.UniqueIdentifier, id_usuario)
+      .input("id", sql.UniqueIdentifier, user.id_usuario)
       .input("pass", sql.VarChar(256), hash)
-      .query("UPDATE USUARIO SET contraseña = @pass WHERE id_usuario = @id");
+      .query(
+        "UPDATE USUARIO SET contraseña = @pass, codigo = NULL, fecha_expiracion = NULL WHERE id_usuario = @id",
+      );
 
-    return { success: true, password: nuevaPassword };
+    // 4. Enviar correo
+    await sendNewPasswordEmail(email, user.nombre, newPassword);
+
+    return {
+      success: true,
+      message: `Nueva contraseña enviada a ${email}`,
+    };
   } catch (error: unknown) {
-    console.error("ERROR RESET PASSWORD:", error);
+    console.error("ERROR ENVIAR RECUPERACION:", error);
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Error inesperado al resetear contraseña" };
+    return { error: "Error inesperado al enviar correo de recuperación" };
   }
 }

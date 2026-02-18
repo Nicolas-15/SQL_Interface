@@ -43,6 +43,7 @@ export class UsuarioService {
       usuario: data.usuario,
       contraseña: passwordHasheada,
       email: data.email,
+      id_rol: data.id_rol ?? null,
     });
 
     return nuevoUsuario;
@@ -84,19 +85,19 @@ export class UsuarioService {
     await this.usuarioRepository.setActivo(id_usuario, activo);
   }
 
-  /*Eliminar usuario*/
+  /*Eliminar usuario — intenta borrado real, si falla por FK desactiva*/
   async eliminarUsuario(id_usuario: string) {
     const usuario = await this.usuarioRepository.findById(id_usuario);
     if (!usuario) {
       throw new Error("USUARIO_NO_EXISTE");
     }
 
-    const pool = await connectToDB("");
-    if (!pool) throw new Error("DB_ERROR");
-
-    await pool.request().input("id", sql.UniqueIdentifier, id_usuario).query(`
-        DELETE FROM usuario
-        WHERE id_usuario = @id
-      `);
+    try {
+      await this.usuarioRepository.deleteById(id_usuario);
+    } catch {
+      // FK constraint (tiene registros de auditoría) → desactivar
+      await this.usuarioRepository.setActivo(id_usuario, false);
+      throw new Error("USUARIO_DESACTIVADO");
+    }
   }
 }

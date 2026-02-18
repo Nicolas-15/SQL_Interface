@@ -17,14 +17,15 @@ export async function resetPasswordAction(
   prevState: ResetPasswordState,
   formData: FormData,
 ): Promise<ResetPasswordState> {
-  const token = formData.get("token") as string;
+  const email = formData.get("email") as string;
+  const code = formData.get("code") as string;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
-  if (!token) {
+  if (!email || !code) {
     return {
       success: false,
-      message: "Token inválido o faltante.",
+      message: "Faltan datos requeridos (email o código).",
     };
   }
 
@@ -43,16 +44,16 @@ export async function resetPasswordAction(
   }
 
   try {
-    await authService.resetPassword(token, password);
+    await authService.resetPassword(email, code, password);
     return {
       success: true,
       message: "Contraseña actualizada exitosamente.",
     };
   } catch (error: any) {
-    if (error.message === "TOKEN_INVALIDO_O_EXPIRADO") {
+    if (error.message === "CODIGO_INVALIDO_O_EXPIRADO") {
       return {
         success: false,
-        message: "El enlace de recuperación es inválido o ha expirado.",
+        message: "El código es inválido o ha expirado.",
       };
     }
     console.error("RESET_PASSWORD_ERROR:", error);

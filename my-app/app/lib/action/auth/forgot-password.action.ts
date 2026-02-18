@@ -1,6 +1,7 @@
 "use server";
 
 import { AuthService } from "@/app/services/auth.service";
+import { headers } from "next/headers";
 
 const authService = new AuthService();
 
@@ -11,6 +12,10 @@ export interface ForgotPasswordState {
     email?: string[];
   };
 }
+
+import { redirect } from "next/navigation";
+
+// ... imports
 
 export async function forgotPasswordAction(
   prevState: ForgotPasswordState,
@@ -28,13 +33,8 @@ export async function forgotPasswordAction(
   }
 
   try {
+    // Generate code and send email
     await authService.requestPasswordReset(email);
-    // Siempre retornamos éxito por seguridad para no revelar si el email existe
-    return {
-      success: true,
-      message:
-        "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
-    };
   } catch (error) {
     console.error("FORGOT_PASSWORD_ERROR:", error);
     return {
@@ -42,4 +42,7 @@ export async function forgotPasswordAction(
       message: "Ocurrió un error al procesar la solicitud. Intente nuevamente.",
     };
   }
+
+  // Redirect to reset password page with email pre-filled
+  redirect(`/login/restablecer-contrasena?email=${encodeURIComponent(email)}`);
 }
