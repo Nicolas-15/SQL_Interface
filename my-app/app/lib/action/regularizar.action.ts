@@ -7,7 +7,7 @@ const service = new RegularizarService();
 export async function buscarDecretosAction(anio: number, numero: number) {
   try {
     const decretos = await service.buscarDecretos(anio, numero);
-    console.log("Decretos encontrados:", decretos); // DEBUG
+    console.log("Decretos encontrados:", decretos);
     return { success: true, decretos };
   } catch (err) {
     console.error(err);

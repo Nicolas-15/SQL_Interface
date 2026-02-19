@@ -4,9 +4,12 @@ import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 import { IconUser } from "@tabler/icons-react";
 import { useUser } from "@/app/context/UserContext";
+import { useState } from "react";
+import ProfileModal from "./ProfileModal";
 
 export default function Header() {
   const { user } = useUser();
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <header className="w-full bg-white border-b border-gray-100 shadow-sm">
@@ -23,10 +26,26 @@ export default function Header() {
           {/* Zona derecha */}
           <div className="flex items-center gap-4">
             {user && (
-              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
-                <IconUser className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">{user.nombre}</span>
-              </div>
+              <>
+                <button
+                  onClick={() => setShowProfile(true)}
+                  className="hidden sm:flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <IconUser className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{user.nombre}</span>
+                </button>
+
+                {showProfile && (
+                  <ProfileModal
+                    user={{
+                      nombre: user.nombre,
+                      email: user.email,
+                      usuario: user.usuario,
+                    }}
+                    onClose={() => setShowProfile(false)}
+                  />
+                )}
+              </>
             )}
             {user && <LogoutButton />}
           </div>

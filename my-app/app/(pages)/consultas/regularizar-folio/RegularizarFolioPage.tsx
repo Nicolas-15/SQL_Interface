@@ -44,7 +44,7 @@ export default function RegularizarFolioPage() {
   const [decretosLiberados, setDecretosLiberados] = useState<DecretoBD[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Pagination State
+  // Estados de la pagina
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;

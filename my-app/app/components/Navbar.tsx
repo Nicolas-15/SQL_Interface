@@ -13,6 +13,7 @@ export default function Navbar() {
     { href: "/consultas", label: "Consultas" },
     { href: "/usuarios", label: "Usuarios" },
     { href: "/titulares", label: "Titulares" },
+    { href: "/tesoreria/regularizacion", label: "Tesorería" },
   ];
 
   // Filtrar links según el rol del usuario

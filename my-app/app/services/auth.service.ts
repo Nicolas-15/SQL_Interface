@@ -27,7 +27,7 @@ export class AuthService {
   async login(data: LoginInput): Promise<LoginResponse> {
     const { identificador, password } = data;
 
-    //1) Buscar usuario por email o username
+    //Buscar usuario por email o username
     const usuario = identificador.includes("@")
       ? await this.usuarioRepo.findByEmail(identificador)
       : await this.usuarioRepo.findByUsername(identificador);
@@ -36,18 +36,18 @@ export class AuthService {
       throw new Error("USUARIO_NO_EXISTE");
     }
 
-    //2) Verificar activo
+    //Verificar activo
     if (!usuario.activo) {
       throw new Error("USUARIO_INACTIVO");
     }
 
-    //3) Validar password
+    //Validar password
     const passwordValida = comparePassword(password, usuario.contraseña);
     if (!passwordValida) {
       throw new Error("CREDENCIALES_INVALIDAS");
     }
 
-    //4) Generar JWT
+    //Generar JWT
     const token = generarJWT({
       id_usuario: usuario.id_usuario,
       nombre: usuario.nombre,
@@ -57,14 +57,14 @@ export class AuthService {
       nombre_rol: usuario.nombre_rol,
     });
 
-    //5) Registrar auditoría
+    //Registrar auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
       registro: "LOGIN",
       descripcion: "Inicio de sesión exitoso",
     });
 
-    //6) Retorno de los atributos
+    //Retorno de los atributos
     return {
       token,
       usuario: {
@@ -78,26 +78,26 @@ export class AuthService {
   }
   /*Solicitud de restablecimiento de contraseña*/
   async requestPasswordReset(email: string, siteUrl?: string): Promise<void> {
-    //1) Buscar usuario por email
+    //Buscar usuario por email
     const usuario = await this.usuarioRepo.findByEmail(email);
     if (!usuario) {
       console.log(`Password reset requested for non-existent email: ${email}`);
       return;
     }
 
-    //2) Generar código de 6 dígitos
+    //Generar código de 6 dígitos
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiration = new Date();
     expiration.setTime(expiration.getTime() + 60 * 60 * 1000); // 1 hora
 
-    //3) Guardar en BD
+    //Guardar en BD
     await this.usuarioRepo.setRecoveryToken(email, code, expiration);
 
-    //4) Enviar email
+    //Enviar email
     const { sendVerificationCodeEmail } = await import("../lib/utils/email");
     await sendVerificationCodeEmail(email, code, usuario.nombre);
 
-    //5) Auditoría
+    //Auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
       registro: "PASSWORD_RESET_REQUEST",
@@ -111,27 +111,51 @@ export class AuthService {
     code: string,
     newPassword: string,
   ): Promise<void> {
-    //1) Verificar email + código
+    //Verificar email + código
     const usuario = await this.usuarioRepo.findByEmailAndCode(email, code);
     if (!usuario) {
       throw new Error("CODIGO_INVALIDO_O_EXPIRADO");
     }
 
-    //2) Hash nueva password
+    //Hash nueva password
     const { hashPassword } = await import("../lib/utils/hash");
     const hashedPassword = await hashPassword(newPassword);
 
-    //3) Actualizar usuario
+    //Actualizar usuario
     await this.usuarioRepo.updatePasswordWithToken(
       usuario.id_usuario,
       hashedPassword,
     );
 
-    //4) Auditoría
+    //Auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
       registro: "PASSWORD_RESET_SUCCESS",
       descripcion: "Contraseña restablecida exitosamente",
+    });
+  }
+  /*Actualizar perfil de usuario*/
+  async updateProfile(
+    id_usuario: string,
+    email: string,
+    password?: string,
+  ): Promise<void> {
+    const updateData: any = {
+      id_usuario,
+      email,
+    };
+
+    if (password && password.trim() !== "") {
+      const { hashPassword } = await import("../lib/utils/hash");
+      updateData.contraseña = await hashPassword(password);
+    }
+
+    await this.usuarioRepo.updateUsuario(updateData);
+
+    await this.auditoriaRepo.createAuditoria({
+      id_usuario,
+      registro: "PROFILE_UPDATE",
+      descripcion: "Actualización de perfil (Email/Password)",
     });
   }
 }

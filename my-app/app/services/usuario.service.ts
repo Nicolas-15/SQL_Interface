@@ -85,7 +85,7 @@ export class UsuarioService {
     await this.usuarioRepository.setActivo(id_usuario, activo);
   }
 
-  /*Eliminar usuario — intenta borrado real, si falla por FK desactiva*/
+  /*Eliminar usuario*/
   async eliminarUsuario(id_usuario: string) {
     const usuario = await this.usuarioRepository.findById(id_usuario);
     if (!usuario) {

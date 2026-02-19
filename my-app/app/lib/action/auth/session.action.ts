@@ -7,6 +7,7 @@ import { UsuarioRepository } from "@/app/repositories/user.repository";
 export interface SessionUser {
   id: string;
   nombre: string;
+  usuario: string;
   email: string;
   nombre_rol: string | null;
 }
@@ -73,6 +74,7 @@ export async function getSessionUserAction(): Promise<SessionUser | null> {
     return {
       id: usuario.id_usuario,
       nombre: usuario.nombre,
+      usuario: usuario.usuario,
       email: usuario.email,
       nombre_rol: usuario.nombre_rol ?? null,
     };

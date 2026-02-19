@@ -583,9 +583,6 @@ export default function ReporteTransparenciaClient() {
                         ) {
                           const date = new Date(value);
                           if (!isNaN(date.getTime())) {
-                            // Formato deseado: 2025-09-01 00:00:00.000 o similar
-                            // El usuario mostró: 2025-09-01 00:00:00.000
-                            // Usaremos un formato local limpio
                             return date
                               .toISOString()
                               .replace("T", " ")

@@ -112,9 +112,9 @@ export function getModulosConsultas(nombreRol: string | null) {
       titulo: "Regularización Pagos Inconclusos Módulo de Tesorería",
       descripcion:
         "Eliminación de registros de pagos inconclusos para su regularización",
-      href: "/consultas/pagos-inconclusos",
+      href: "/tesoreria/regularizacion",
       color: "green",
-      disponible: false,
+      disponible: true,
     },
     {
       id: 5,
@@ -122,7 +122,7 @@ export function getModulosConsultas(nombreRol: string | null) {
       descripcion: "Permite la gestión de usuarios de las aplicaciones CAS.",
       href: "/consultas/gestion-cas",
       color: "purple",
-      disponible: false,
+      disponible: true,
     },
   ];
 

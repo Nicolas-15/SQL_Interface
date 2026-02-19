@@ -37,6 +37,7 @@ export default async function RootLayout({
           userData = {
             id: usuario.id_usuario,
             nombre: usuario.nombre,
+            usuario: usuario.usuario,
             email: usuario.email,
             nombre_rol: usuario.nombre_rol ?? null,
           };

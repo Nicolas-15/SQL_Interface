@@ -93,8 +93,6 @@ export class FirmanteRepository {
 
     const rutAlcalde = formatRut(alcalde.rut);
     const rutSubrogante = formatRut(subrogante.rut);
-
-    // Asumiendo que 'usuario' es el 'Id_Firmante' (ej: JJOFRE)
     const idAlcalde = alcalde.usuario;
     const idSubrogante = subrogante.usuario;
     const nombreAlcalde = alcalde.nombre.toUpperCase();

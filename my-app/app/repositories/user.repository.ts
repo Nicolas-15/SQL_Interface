@@ -22,6 +22,12 @@ export interface CrearUsuarioDB {
   id_rol?: string | null;
 }
 
+export interface UpdateUsuarioDB {
+  id_usuario: string;
+  email?: string;
+  contraseña?: string; // Ya hasheada si viene
+}
+
 export class UsuarioRepository {
   /*Busqueda por email */
   async findByEmail(email: string): Promise<UsuarioDB | null> {
@@ -231,5 +237,31 @@ export class UsuarioRepository {
             fecha_expiracion = NULL
         WHERE id_usuario = @id
       `);
+  }
+  /* Actualizar usuario (Perfil) */
+  async updateUsuario(data: UpdateUsuarioDB): Promise<void> {
+    const pool = await connectToDB("");
+    if (!pool) return;
+
+    const request = pool
+      .request()
+      .input("id", sql.UniqueIdentifier, data.id_usuario);
+
+    let setClauses: string[] = [];
+
+    if (data.email) {
+      request.input("email", sql.VarChar, data.email);
+      setClauses.push("email = @email");
+    }
+
+    if (data.contraseña) {
+      request.input("contraseña", sql.VarChar, data.contraseña);
+      setClauses.push("contraseña = @contraseña");
+    }
+
+    if (setClauses.length === 0) return;
+
+    const query = `UPDATE USUARIO SET ${setClauses.join(", ")} WHERE id_usuario = @id`;
+    await request.query(query);
   }
 }

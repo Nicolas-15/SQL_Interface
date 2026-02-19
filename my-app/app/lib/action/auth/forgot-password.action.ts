@@ -15,8 +15,6 @@ export interface ForgotPasswordState {
 
 import { redirect } from "next/navigation";
 
-// ... imports
-
 export async function forgotPasswordAction(
   prevState: ForgotPasswordState,
   formData: FormData,
@@ -33,7 +31,7 @@ export async function forgotPasswordAction(
   }
 
   try {
-    // Generate code and send email
+    // Generar codigo y enviar correo
     await authService.requestPasswordReset(email);
   } catch (error) {
     console.error("FORGOT_PASSWORD_ERROR:", error);
@@ -43,6 +41,6 @@ export async function forgotPasswordAction(
     };
   }
 
-  // Redirect to reset password page with email pre-filled
+  // Redirigir a la pagina de restablecimiento de contraseña con el correo prellenado
   redirect(`/login/restablecer-contrasena?email=${encodeURIComponent(email)}`);
 }
