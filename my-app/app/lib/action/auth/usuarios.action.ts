@@ -109,7 +109,7 @@ export async function actualizarUsuarioAction(formData: FormData) {
           .request()
           .input("nombre_rol", sql.VarChar(100), rol)
           .query(
-            "SELECT id_rol FROM [SQL_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
+            "SELECT id_rol FROM [app_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
           );
         id_rol = result.recordset[0]?.id_rol || null;
       }

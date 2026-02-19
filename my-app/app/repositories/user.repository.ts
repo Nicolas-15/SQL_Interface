@@ -40,7 +40,7 @@ export class UsuarioRepository {
         u.id_rol,
         r.nombre_rol
         FROM USUARIO u
-        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        LEFT JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
         WHERE u.email = @email`);
     return result.recordset[0] ?? null;
   }
@@ -63,7 +63,7 @@ export class UsuarioRepository {
         u.id_rol,
         r.nombre_rol
         FROM USUARIO u
-        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        LEFT JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
         WHERE u.usuario = @usuario`);
     return result.recordset[0] ?? null;
   }
@@ -85,7 +85,7 @@ export class UsuarioRepository {
           u.id_rol,
           r.nombre_rol
         FROM USUARIO u
-        LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+        LEFT JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
         WHERE u.id_usuario = @id
       `);
 
@@ -145,7 +145,7 @@ export class UsuarioRepository {
       .request()
       .input("nombre_rol", sql.VarChar(100), nombreRol)
       .query(
-        "SELECT TOP 1 id_rol FROM [SQL_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
+        "SELECT TOP 1 id_rol FROM [app_Interface].[dbo].[rol] WHERE nombre_rol = @nombre_rol",
       );
 
     return result.recordset[0]?.id_rol ?? null;

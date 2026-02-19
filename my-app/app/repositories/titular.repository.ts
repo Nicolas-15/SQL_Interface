@@ -27,8 +27,8 @@ export class TitularRepository {
 
     const result = await pool.request().query(`
       SELECT t.id_titular, t.nombre, t.rut, r.id_rol, t.usuario, t.esTitular, r.nombre_rol
-      FROM [SQL_Interface].[dbo].[titular] t
-      JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = t.id_rol
+      FROM [app_Interface].[dbo].[titular] t
+      JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = t.id_rol
     `);
 
     return result.recordset;
@@ -42,8 +42,8 @@ export class TitularRepository {
       .request()
       .input("idRol", sql.UniqueIdentifier, id_rol).query(`
         SELECT t.id_titular, t.nombre, t.rut, r.id_rol, t.usuario, t.esTitular, r.nombre_rol
-        FROM [SQL_Interface].[dbo].[titular] t
-        JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = t.id_rol
+        FROM [app_Interface].[dbo].[titular] t
+        JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = t.id_rol
         WHERE t.id_rol = @idRol
       `);
 

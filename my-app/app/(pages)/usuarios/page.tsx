@@ -18,7 +18,7 @@ export async function getUsers(): Promise<User[]> {
   const result = await db.request().query(`
       SELECT u.id_usuario, u.nombre, u.email, u.activo, u.id_rol, r.nombre_rol
       FROM usuario u
-      LEFT JOIN [SQL_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
+      LEFT JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
     `);
 
   return (result.recordset as (DBUser & { nombre_rol?: string })[]).map(

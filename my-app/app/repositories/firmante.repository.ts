@@ -83,10 +83,12 @@ export class FirmanteRepository {
     console.log(">>> Titular Subrogante:", subrogante);
 
     const formatRut = (rut: string) => {
-      // Eliminar puntos y asegurar formato con guion
       const cleanRut = rut.replace(/\./g, "");
-      // Asegurar un 0 al inicio si no lo tiene (ajustar según lógica de negocio si es longitud fija)
-      return cleanRut.startsWith("0") ? cleanRut : "0" + cleanRut;
+      const parts = cleanRut.split("-");
+
+      return (
+        parts[0].padStart(9, "0") + (parts.length > 1 ? "-" + parts[1] : "")
+      );
     };
 
     const rutAlcalde = formatRut(alcalde.rut);

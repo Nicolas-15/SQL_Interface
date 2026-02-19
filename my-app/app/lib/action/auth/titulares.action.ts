@@ -25,29 +25,3 @@ export async function intercambiarTitularesAction(cargo: string | null) {
     return { error: "No se pudo intercambiar la titularidad" };
   }
 }
-
-import { TitularRepository } from "../../../repositories/titular.repository";
-
-const titularRepo = new TitularRepository();
-
-/** Cambiar datos del titular */
-export async function cambiarTitularAction(
-  nombre: string,
-  rut: string,
-  id_rol: string,
-  usuario: string,
-) {
-  try {
-    await titularRepo.changeTitular({
-      nombre,
-      rut,
-      id_rol,
-      usuario,
-      esTitular: false,
-    });
-    return { success: true };
-  } catch (err) {
-    console.error(err);
-    return { error: "No se pudo actualizar el titular" };
-  }
-}
