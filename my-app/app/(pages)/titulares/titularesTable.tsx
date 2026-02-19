@@ -52,6 +52,7 @@ export default function TitularesTable({ titulares }: Props) {
               formData.rut,
               formData.id_rol,
               formData.usuario,
+              editing.esTitular,
             );
             setEditing(null);
             router.refresh();
