@@ -30,8 +30,8 @@ export default function LoginForm() {
           style={{ backgroundImage: "url('/login.webp')" }}
         />
         <form action={formAction} className="p-6">
-          <h1 className="text-2xl font-bold mb-2 text-center text-gray-900">
-            Bienvenido a SQL Interface
+          <h1 className="text-4xl font-bold mb-6 text-center bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-blue-900 tracking-tight drop-shadow-sm">
+            Bienvenido a ApliCAS
           </h1>
 
           <div className="flex flex-col gap-4">
@@ -67,7 +67,7 @@ export default function LoginForm() {
 
             <button
               type="submit"
-              className="w-full bg-[#1e504f] hover:bg-[#1e504f]/90
+              className="w-full bg-blue-600 hover:bg-blue-700
                 text-white py-3 rounded-lg font-semibold transition"
             >
               Ingresar

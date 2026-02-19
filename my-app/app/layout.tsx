@@ -13,8 +13,8 @@ import { UsuarioRepository } from "./repositories/user.repository";
 import type { SessionUser } from "./lib/action/auth/session.action";
 
 export const metadata: Metadata = {
-  title: "SQL Interface",
-  description: "Interfaz para consultar base de datos SQL",
+  title: "ApliCAS",
+  description: "Aplicaciones de gestión municipal",
 };
 
 export default async function RootLayout({
