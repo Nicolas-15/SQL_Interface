@@ -44,6 +44,8 @@ export class AuthService {
     //Validar password
     const passwordValida = comparePassword(password, usuario.contraseña);
     if (!passwordValida) {
+      // Artificial delay to mitigate brute force
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       throw new Error("CREDENCIALES_INVALIDAS");
     }
 
@@ -114,6 +116,8 @@ export class AuthService {
     //Verificar email + código
     const usuario = await this.usuarioRepo.findByEmailAndCode(email, code);
     if (!usuario) {
+      // Artificial delay to mitigate brute force
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       throw new Error("CODIGO_INVALIDO_O_EXPIRADO");
     }
 

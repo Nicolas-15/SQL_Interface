@@ -62,9 +62,6 @@ const rutasPermitidas: Record<string, string[]> = {
   ],
 };
 
-/**
- * Verifica si un rol tiene acceso a una ruta determinada.
- */
 export function tieneAcceso(nombreRol: string | null, ruta: string): boolean {
   if (!nombreRol) return false;
   if (nombreRol === ROLES.ADMIN) return true;
@@ -72,7 +69,22 @@ export function tieneAcceso(nombreRol: string | null, ruta: string): boolean {
   const rutas = rutasPermitidas[nombreRol];
   if (!rutas) return false;
 
-  return rutas.some((r) => ruta === r || ruta.startsWith(r + "/"));
+  return rutas.some((r) => {
+    if (ruta === r) return true;
+
+    // Si la ruta permitida es una base general, requerimos coincidencia exacta.
+    // Esto evita que "/consultas" autorice por error "/consultas/reporte-transparencia"
+    const basesGenerales = [
+      "/consultas",
+      "/usuarios",
+      "/titulares",
+      "/tesoreria",
+    ];
+    if (basesGenerales.includes(r)) return false;
+
+    // Para rutas específicas (ej: /consultas/reporte-transparencia), permite subrutas
+    return ruta.startsWith(r + "/");
+  });
 }
 
 /**

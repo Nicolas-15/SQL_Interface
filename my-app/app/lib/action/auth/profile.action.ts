@@ -1,6 +1,6 @@
 "use server";
 
-import { getSessionUserAction } from "./session.action";
+import { protectAction } from "@/app/lib/utils/auth-server";
 import { AuthService } from "@/app/services/auth.service";
 import { revalidatePath } from "next/cache";
 
@@ -8,10 +8,7 @@ const authService = new AuthService();
 
 export async function updateProfileAction(prevState: any, formData: FormData) {
   try {
-    const session = await getSessionUserAction();
-    if (!session) {
-      return { error: "No autorizado" };
-    }
+    const session = await protectAction("/");
 
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;

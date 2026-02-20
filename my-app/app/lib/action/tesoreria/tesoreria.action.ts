@@ -1,13 +1,14 @@
 "use server";
 
 import { TesoreriaRepository } from "@/app/repositories/tesoreria.repository";
-import { getSessionUserAction } from "../auth/session.action";
+import { protectAction } from "@/app/lib/utils/auth-server";
 import { revalidatePath } from "next/cache";
 
 const repo = new TesoreriaRepository();
 
 export async function previewPagoTesoreriaAction(formData: FormData) {
   try {
+    await protectAction("/tesoreria/regularizacion");
     const caja = Number(formData.get("caja"));
     const folio = Number(formData.get("folio"));
     const rut = formData.get("rut") as string;
@@ -17,18 +18,8 @@ export async function previewPagoTesoreriaAction(formData: FormData) {
       return { error: "Todos los campos son obligatorios" };
     }
 
-    console.log("previewPagoTesoreriaAction inputs:", {
-      caja,
-      folio,
-      rut,
-      fechaStr,
-    });
-
     const fecha = new Date(fechaStr + "T00:00:00");
-    console.log("Date object:", fecha);
-
     const pagos = await repo.findPago(caja, folio, rut, fecha);
-    console.log("Repo found:", pagos?.length);
 
     if (!pagos || pagos.length === 0) {
       return { error: "No se encontró el pago con los datos proporcionados." };
@@ -45,8 +36,7 @@ export async function previewPagoTesoreriaAction(formData: FormData) {
 
 export async function reversarPagoTesoreriaAction(formData: FormData) {
   try {
-    const session = await getSessionUserAction();
-    if (!session) return { error: "No autorizado" };
+    const session = await protectAction("/tesoreria/regularizacion");
 
     const caja = Number(formData.get("caja"));
     const folio = Number(formData.get("folio"));

@@ -5,12 +5,14 @@ import { UsuarioRepository } from "@/app/repositories/user.repository";
 import { revalidatePath } from "next/cache";
 import { hashPassword } from "@/app/lib/utils/hash";
 import { connectToDB } from "@/app/lib/utils/db-connection";
+import { protectAction } from "@/app/lib/utils/auth-server";
 import sql from "mssql";
 
 const usuarioService = new UsuarioService();
 
 export async function eliminarUsuarioAction(id: string) {
   try {
+    await protectAction("/usuarios");
     await usuarioService.eliminarUsuario(id);
     revalidatePath("/usuarios");
     return { success: true, message: "Usuario eliminado de la base de datos" };
@@ -32,6 +34,7 @@ export async function eliminarUsuarioAction(id: string) {
 
 export async function crearUsuarioAction(formData: FormData) {
   try {
+    await protectAction("/usuarios");
     const nombre = String(formData.get("nombre") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const rol = String(formData.get("rol") ?? "").trim();
@@ -92,6 +95,7 @@ export async function crearUsuarioAction(formData: FormData) {
 
 export async function actualizarUsuarioAction(formData: FormData) {
   try {
+    await protectAction("/usuarios");
     const id_usuario = String(formData.get("id_usuario") ?? "");
     const nombre = String(formData.get("nombre") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
@@ -181,6 +185,7 @@ export async function actualizarUsuarioAction(formData: FormData) {
 // Enviar correo con nueva contraseña aleatoria (Admin Reset)
 export async function enviarRecuperacionAction(email: string) {
   try {
+    await protectAction("/usuarios");
     const { connectToDB } = await import("@/app/lib/utils/db-connection");
     const sql = (await import("mssql")).default;
     const { sendNewPasswordEmail } = await import("@/app/lib/utils/email");

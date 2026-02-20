@@ -1,6 +1,7 @@
 "use server";
 
 import { UsuarioRepository } from "@/app/repositories/usuariocas.repository";
+import { protectAction } from "@/app/lib/utils/auth-server";
 import { getSessionUserAction } from "../auth/session.action";
 import { revalidatePath } from "next/cache";
 
@@ -14,6 +15,7 @@ export async function getUsuariosDropdownAction(
   sistema: number | null = null,
 ) {
   try {
+    await protectAction("/consultas/gestion-cas");
     const usuarios = await repo.findAllUsuarios(sistema, search);
     const plainUsers = JSON.parse(JSON.stringify(usuarios));
     return { success: true, data: plainUsers };
@@ -28,8 +30,7 @@ export async function getUsuariosDropdownAction(
  */
 export async function replicarPermisosAction(formData: FormData) {
   try {
-    const session = await getSessionUserAction();
-    if (!session) return { error: "No autorizado" };
+    const session = await protectAction("/consultas/gestion-cas");
 
     const origen = formData.get("origen") as string;
     const destino = formData.get("destino") as string;
@@ -73,8 +74,7 @@ export async function replicarPermisosAction(formData: FormData) {
  */
 export async function crearUsuarioAction(formData: FormData) {
   try {
-    const session = await getSessionUserAction();
-    if (!session) return { error: "No autorizado" };
+    const session = await protectAction("/consultas/gestion-cas");
 
     const base = formData.get("base") as string;
     const sistema = Number(formData.get("sistema") || 2);
@@ -178,8 +178,7 @@ export async function crearUsuarioAction(formData: FormData) {
  */
 export async function eliminarUsuarioAction(formData: FormData) {
   try {
-    const session = await getSessionUserAction();
-    if (!session) return { error: "No autorizado" };
+    const session = await protectAction("/consultas/gestion-cas");
 
     const cuenta = formData.get("cuenta") as string;
     const sistema = Number(formData.get("sistema") || 2);

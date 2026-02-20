@@ -1,20 +1,9 @@
 import { Suspense } from "react";
-import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
-import { redirect } from "next/navigation";
-import { tieneAcceso } from "@/app/lib/utils/roles.config";
+import { protectPage } from "@/app/lib/utils/auth-server";
 import GestionCasClient from "./GestionCasClient";
-import Breadcrumbs from "@/app/components/Breadcrumbs";
 
 export default async function GestionCasPage() {
-  const session = await getSessionUserAction();
-
-  if (!session) {
-    redirect("/auth/login");
-  }
-
-  if (!tieneAcceso(session.nombre_rol, "/consultas/gestion-cas")) {
-    redirect("/consultas");
-  }
+  await protectPage("/consultas/gestion-cas");
 
   return (
     <div className="p-6 md:p-10 space-y-8 max-w-7xl mx-auto">

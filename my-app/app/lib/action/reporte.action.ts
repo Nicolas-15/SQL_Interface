@@ -1,12 +1,14 @@
 "use server";
 
 import { PermisoRepository } from "@/app/repositories/permiso.repository";
+import { protectAction } from "@/app/lib/utils/auth-server";
 
 export async function obtenerReporteTransparenciaAction(
   fechaInicio: string,
   fechaFin: string,
 ) {
   try {
+    await protectAction("/consultas/reporte-transparencia");
     const repo = new PermisoRepository();
     const reportes = await repo.obtenerReporteTransparencia(
       fechaInicio,
@@ -32,6 +34,7 @@ export async function obtenerReporteTransparenciaAction(
 
 export async function testConnectionAction() {
   try {
+    await protectAction("/consultas/reporte-transparencia");
     const repo = new PermisoRepository();
     const result = await repo.testConnection();
     return { success: true, message: "Conexión exitosa", data: result };

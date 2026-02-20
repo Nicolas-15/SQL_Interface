@@ -1,13 +1,16 @@
 "use server";
 
-import { FirmanteRepository } from "../../../repositories/firmante.repository";
-import { TitularRepository } from "../../../repositories/titular.repository";
+import { FirmanteRepository } from "@/app/repositories/firmante.repository";
+import { protectAction } from "@/app/lib/utils/auth-server";
+import { revalidatePath } from "next/cache";
+import { TitularRepository } from "@/app/repositories/titular.repository";
 
 const repo = new FirmanteRepository();
 
 /** Obtener titular actual */
 export async function obtenerTitularActualAction() {
   try {
+    await protectAction("/consultas/intercambiar-titular");
     const titular = await repo.findTitularActual();
     return { success: true, titular };
   } catch (err) {
@@ -19,6 +22,8 @@ export async function obtenerTitularActualAction() {
 /** Intercambiar titularidad */
 export async function intercambiarTitularesAction(cargo: string | null) {
   try {
+    await protectAction("/consultas/intercambiar-titular");
+    if (!cargo) throw new Error("Parámetro cargo es requerido");
     await repo.intercambiarTitularidad(cargo);
     return { success: true };
   } catch (err) {
@@ -37,6 +42,7 @@ export async function cambiarTitularAction(
 ) {
   const repo = new TitularRepository();
   try {
+    await protectAction("/consultas/intercambiar-titular");
     await repo.changeTitular({
       nombre,
       rut,
