@@ -6,9 +6,6 @@ const nextConfig = {
       bodySizeLimit: "100mb",
     },
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // Add headers configuration for cookie handling
   async headers() {
     return [
