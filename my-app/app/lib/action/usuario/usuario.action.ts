@@ -9,9 +9,12 @@ const repo = new UsuarioRepository();
 /**
  * Obtener lista de usuarios de un sistema (por defecto 2 - Sistema)
  */
-export async function getUsuariosDropdownAction(sistema: number = 2) {
+export async function getUsuariosDropdownAction(
+  search: string = "",
+  sistema: number | null = null,
+) {
   try {
-    const usuarios = await repo.findAllUsuarios(sistema);
+    const usuarios = await repo.findAllUsuarios(sistema, search);
     const plainUsers = JSON.parse(JSON.stringify(usuarios));
     return { success: true, data: plainUsers };
   } catch (error: any) {
@@ -74,39 +77,135 @@ export async function crearUsuarioAction(formData: FormData) {
     if (!session) return { error: "No autorizado" };
 
     const base = formData.get("base") as string;
-    const cuenta = formData.get("cuenta") as string;
-    const nombre = formData.get("nombre") as string;
     const sistema = Number(formData.get("sistema") || 2);
+    const usuariosJson = formData.get("usuarios") as string;
 
-    if (!base || !cuenta || !nombre) {
-      return { error: "Todos los campos son obligatorios." };
+    if (!base || !usuariosJson) {
+      return { error: "Faltan parámetros obligatorios." };
     }
 
-    if (cuenta.length > 10) {
-      return { error: "La cuenta de usuario no puede exceder 10 caracteres." };
+    let usuariosPayload: { cuenta: string; nombre: string }[] = [];
+    try {
+      usuariosPayload = JSON.parse(usuariosJson);
+    } catch (e) {
+      return { error: "El formato de usuarios enviados es inválido." };
+    }
+
+    if (usuariosPayload.length === 0) {
+      return { error: "Debe ingresar al menos un usuario para crear." };
     }
 
     // Validar existencia base
     const userBase = await repo.findUsuario(base, sistema);
     if (!userBase) return { error: `El usuario base ${base} no existe.` };
 
-    // Validar que nuevo no exista
-    const userNuevo = await repo.findUsuario(cuenta, sistema);
-    if (userNuevo) return { error: `El usuario ${cuenta} ya existe.` };
+    let creados = 0;
+    let creadosList: { cuenta: string; nombre: string }[] = [];
+    let errores: string[] = [];
 
-    await repo.crearUsuario(
-      { cuenta: cuenta.toUpperCase(), nombre: nombre.toUpperCase(), base },
-      sistema,
-      session.id,
-    );
+    // Iteración secuencial para proteger la BD
+    for (const u of usuariosPayload) {
+      const cuenta = u.cuenta.trim();
+      const nombre = u.nombre.trim();
+
+      if (!cuenta || !nombre) {
+        errores.push(`Campos vacíos omitidos.`);
+        continue;
+      }
+
+      if (cuenta.length > 10) {
+        errores.push(`Usuario ${cuenta}: Excede límite de 10 caracteres.`);
+        continue;
+      }
+
+      if (nombre.length > 60) {
+        errores.push(
+          `Usuario ${cuenta}: Nombre excede límite de 60 caracteres.`,
+        );
+        continue;
+      }
+
+      // Validar que nuevo no exista
+      const userNuevo = await repo.findUsuario(cuenta, sistema);
+      if (userNuevo) {
+        errores.push(`Usuario ${cuenta}: Ya existe.`);
+        continue;
+      }
+
+      try {
+        await repo.crearUsuario(
+          { cuenta: cuenta.toUpperCase(), nombre: nombre.toUpperCase(), base },
+          sistema,
+          session.id,
+        );
+        creados++;
+        creadosList.push({
+          cuenta: cuenta.toUpperCase(),
+          nombre: nombre.toUpperCase(),
+        });
+      } catch (e: any) {
+        errores.push(`Usuario ${cuenta}: Error de BD (${e.message}).`);
+      }
+    }
 
     revalidatePath("/consultas/gestion-cas");
+
+    if (errores.length > 0 && creados === 0) {
+      return {
+        error: `No se creó ningún usuario. Errores: ${errores.join(" | ")}`,
+      };
+    } else if (errores.length > 0 && creados > 0) {
+      return {
+        success: true,
+        creadosList,
+        message: `Se crearon ${creados} usuarios, pero hubo problemas con algunos: ${errores.join(" | ")}`,
+      };
+    }
+
     return {
       success: true,
-      message: `Usuario ${cuenta} creado correctamente copiando perfil de ${base}.`,
+      creadosList,
+      message: `¡Éxito! ${creados} usuarios creados correctamente copiando el perfil de ${base}.`,
     };
   } catch (error: any) {
     console.error("Error crearUsuario:", error);
     return { error: error.message || "Error al crear usuario." };
+  }
+}
+
+/**
+ * Eliminar Usuario (Global o por Sistema)
+ */
+export async function eliminarUsuarioAction(formData: FormData) {
+  try {
+    const session = await getSessionUserAction();
+    if (!session) return { error: "No autorizado" };
+
+    const cuenta = formData.get("cuenta") as string;
+    const sistema = Number(formData.get("sistema") || 2);
+    const modoGlobal = formData.get("modoGlobal") === "true"; // Determina el alcance
+
+    if (!cuenta) {
+      return { error: "Debe seleccionar un usuario para eliminar." };
+    }
+
+    if (modoGlobal) {
+      await repo.eliminarUsuarioGlobal(cuenta, session.id);
+      revalidatePath("/consultas/gestion-cas");
+      return {
+        success: true,
+        message: `Usuario ${cuenta} eliminado exitosamente de TODOS los sistemas.`,
+      };
+    } else {
+      await repo.eliminarUsuarioSistema(cuenta, sistema, session.id);
+      revalidatePath("/consultas/gestion-cas");
+      return {
+        success: true,
+        message: `Usuario ${cuenta} eliminado exitosamente del Sistema ${sistema}.`,
+      };
+    }
+  } catch (error: any) {
+    console.error("Error eliminarUsuario:", error);
+    return { error: error.message || "Error al eliminar usuario." };
   }
 }

@@ -50,10 +50,10 @@ const rutasPermitidas: Record<string, string[]> = {
     "/consultas/intercambiar-titular",
     "/consultas/reporte-transparencia",
     "/consultas/regularizar-folio",
-    "/consultas/pagos-inconclusos",
+    "/tesoreria/regularizacion",
     "/consultas/gestion-cas",
   ],
-  [ROLES.TESORERIA]: ["/consultas", "/consultas/pagos-inconclusos"],
+  [ROLES.TESORERIA]: ["/consultas", "/tesoreria/regularizacion"],
   [ROLES.TRANSITO]: ["/consultas", "/consultas/reporte-transparencia"],
   [ROLES.FINANZAS]: ["/consultas", "/consultas/regularizar-folio"],
   [ROLES.ADMINISTRACION_MUNICIPAL]: [

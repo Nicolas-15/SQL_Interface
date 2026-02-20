@@ -1,5 +1,8 @@
 import { connectToDB } from "@/app/lib/utils/db-connection";
 import UsuariosClient, { User } from "./usuariosClient";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
+import { tieneAcceso } from "@/app/lib/utils/roles.config";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +36,17 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export default async function UsuariosPage() {
+  const session = await getSessionUserAction();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  // Defensa SSR: Solo roles permitidos según roles.config.ts pueden ver esto
+  if (!tieneAcceso(session.nombre_rol, "/usuarios")) {
+    redirect("/");
+  }
+
   const users = await getUsers();
   return <UsuariosClient initialUsers={users} />;
 }

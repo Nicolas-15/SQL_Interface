@@ -1,7 +1,21 @@
 import { TitularService } from "@/app/services/titular.service";
 import TitularesTable from "./titularesTable";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
+import { tieneAcceso } from "@/app/lib/utils/roles.config";
+import { redirect } from "next/navigation";
 
 export default async function Page() {
+  const session = await getSessionUserAction();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  // Defensa SSR: Solo roles permitidos según roles.config.ts pueden ver esto
+  if (!tieneAcceso(session.nombre_rol, "/titulares")) {
+    redirect("/");
+  }
+
   const service = new TitularService();
   const titulares = await service.listarTitulares();
 

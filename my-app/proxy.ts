@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { verificarJWT } from "./app/lib/utils/jwt";
 import { tieneAcceso } from "./app/lib/utils/roles.config";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Permitir login y sus sub-rutas sin token
@@ -48,5 +48,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|css|js|map)$).*)",
   ],
 };
-
-export const runtime = "nodejs";

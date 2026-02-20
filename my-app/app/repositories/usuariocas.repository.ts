@@ -22,16 +22,34 @@ export class UsuarioRepository {
   /**
    * Buscar usuarios por sistema para dropdowns
    */
-  async findAllUsuarios(sistema: number = 2): Promise<UsuarioDB[]> {
+  async findAllUsuarios(
+    sistema: number | null = 2,
+    search: string = "",
+  ): Promise<UsuarioDB[]> {
     const pool = await connectToDB("comun");
     if (!pool) return [];
 
-    const result = await pool.request().query(`
-        SELECT Usuar_Cuenta, Usuar_Name, Usuar_Sistema
+    const request = pool.request();
+
+    let queryStr = `
+        SELECT TOP 20 Usuar_Cuenta, Usuar_Name, Usuar_Sistema
         FROM Usuario
-        WHERE Inactivo = 0 OR Inactivo IS NULL -- Re-adding basic sanity check but user wanted 'all', keeping it broad but safer to exclude deleted? User said 'necesito que se muestren todos'. safely removing filter as requested.
-        ORDER BY Usuar_Sistema, Usuar_Name ASC
-      `);
+        WHERE (Inactivo = 0 OR Inactivo IS NULL) 
+    `;
+
+    if (sistema !== null) {
+      request.input("Sistema", sql.Int, sistema);
+      queryStr += ` AND Usuar_Sistema = @Sistema `;
+    }
+
+    if (search) {
+      request.input("Search", sql.VarChar(100), `%${search}%`);
+      queryStr += ` AND (Usuar_Name LIKE @Search OR Usuar_Cuenta LIKE @Search) `;
+    }
+
+    queryStr += ` ORDER BY Usuar_Sistema, Usuar_Name ASC`;
+
+    const result = await request.query(queryStr);
 
     return result.recordset;
   }
@@ -97,11 +115,11 @@ export class UsuarioRepository {
               Menu_Sistema, Menu_Name, Menu_Caption, Codigo_Area
           )
           SELECT
-              Menu_Activado, Menu_Visible, @UsuarioDestino, Menu_Nuevo, Menu_Guardar,
+              Menu_Activado, Menu_Visible, LEFT(@UsuarioDestino, 6), Menu_Nuevo, Menu_Guardar,
               Menu_Eliminar, Menu_Imprimir, Menu_Consultar, Menu_Listar, Menu_Todo,
               Menu_Sistema, Menu_Name, Menu_Caption, Codigo_Area
           FROM Permisos
-          WHERE Menu_UserID = @UsuarioOrigen
+          WHERE Menu_UserID = LEFT(@UsuarioOrigen, 6)
           AND Menu_Sistema = @CodigoSistema;
         `);
 
@@ -114,8 +132,8 @@ export class UsuarioRepository {
           (Codigo_Area, Fecha, Estacion, Tabla, Accion, Observacion, MiSql)
           VALUES
           ('1', GETDATE(), 'WebAdmin', 'Permisos', 'Replica', 
-           CONCAT('Replica permisos desde ', @UsuarioOrigen, ' hacia ', @UsuarioDestino, ' en Sistema: ', @CodigoSistema), 
-           'INSERT COPY PERMISOS');
+           LEFT(CONCAT('Replica de ', @UsuarioOrigen, ' a ', @UsuarioDestino, ' Sis:', @CodigoSistema), 50), 
+           LEFT('INSERT COPY PERMISOS', 20));
         `);
 
       await transaction.commit();
@@ -164,12 +182,12 @@ export class UsuarioRepository {
             SELECT
                 @UsuarioNuevo,
                 Usuar_Clave,
-                @NombreNuevo,
+                LEFT(@NombreNuevo, 50),
                 Usuar_Nivel,
                 Usuar_Sistema,
                 Usuar_Iniciales,
                 User_Iniciales,
-                Grupo,
+                LEFT(Grupo, 20),
                 Codigo_Caja,
                 Activa_Caja,
                 Id_Establecimiento,
@@ -195,11 +213,11 @@ export class UsuarioRepository {
               Menu_Sistema, Menu_Name, Menu_Caption, Codigo_Area
           )
           SELECT
-              Menu_Activado, Menu_Visible, @UsuarioNuevo, Menu_Nuevo, Menu_Guardar,
+              Menu_Activado, Menu_Visible, LEFT(@UsuarioNuevo, 6), Menu_Nuevo, Menu_Guardar,
               Menu_Eliminar, Menu_Imprimir, Menu_Consultar, Menu_Listar, Menu_Todo,
               Menu_Sistema, Menu_Name, Menu_Caption, Codigo_Area
           FROM Permisos
-          WHERE Menu_UserID = @UsuarioBase
+          WHERE Menu_UserID = LEFT(@UsuarioBase, 6)
           AND Menu_Sistema = @CodigoSistema;
         `);
 
@@ -213,8 +231,8 @@ export class UsuarioRepository {
           (Codigo_Area, Fecha, Estacion, Tabla, Accion, Observacion, MiSql)
           VALUES
           ('1', GETDATE(), 'WebAdmin', 'Permisos y Usuario', 'Crea', 
-           CONCAT('Creación usuario: ', @UsuarioNuevo, ' (', @NombreNuevo, ') copiando permisos de: ', @UsuarioBase, ' en Sistema: ', @CodigoSistema), 
-           'INSERT COPY USER');
+           LEFT(CONCAT('Crear ', @UsuarioNuevo, ' copiado de ', @UsuarioBase, ' Sis:', @CodigoSistema, ' N:', @NombreNuevo), 50), 
+           LEFT('INSERT COPY USER', 20));
         `);
 
       await transaction.commit();
@@ -224,6 +242,152 @@ export class UsuarioRepository {
         id_usuario: idUsuarioAuditoria,
         registro: "CREAR_USUARIO_CAS",
         descripcion: `Creación usuario ${nuevoUsuario.cuenta} copiando de ${nuevoUsuario.base} en sistema ${sistema}`,
+      });
+    } catch (err) {
+      if (transaction) await transaction.rollback();
+      throw err;
+    }
+  }
+
+  /**
+   * ELIMINAR 1: Eliminar permisos y usuario de un solo sistema
+   */
+  async eliminarUsuarioSistema(
+    cuenta: string,
+    sistema: number,
+    idUsuarioAuditoria: string,
+  ): Promise<void> {
+    const pool = await connectToDB("comun");
+    if (!pool) throw new Error("Error de conexión a BD Comun");
+
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      // Validar existencia del usuario en el sistema específico
+      const checkParams = await new sql.Request(transaction)
+        .input("Cuenta", sql.VarChar(10), cuenta)
+        .input("Sistema", sql.Int, sistema)
+        .query(
+          `SELECT 1 FROM Usuario WHERE Usuar_Cuenta = @Cuenta AND Usuar_Sistema = @Sistema`,
+        );
+
+      if (checkParams.recordset.length === 0) {
+        throw new Error(
+          `El usuario ${cuenta} no existe en el sistema ${sistema}.`,
+        );
+      }
+
+      // Eliminar permisos solo del sistema indicado (Respetar Límite 6 Permisos)
+      await new sql.Request(transaction)
+        .input("Cuenta", sql.VarChar(10), cuenta)
+        .input("Sistema", sql.Int, sistema).query(`
+          DELETE FROM Permisos 
+          WHERE Menu_UserID = LEFT(@Cuenta, 6)
+          AND Menu_Sistema = @Sistema;
+        `);
+
+      // Eliminar usuario solo del sistema indicado
+      await new sql.Request(transaction)
+        .input("Cuenta", sql.VarChar(10), cuenta)
+        .input("Sistema", sql.Int, sistema).query(`
+          DELETE FROM Usuario 
+          WHERE Usuar_Cuenta = @Cuenta
+          AND Usuar_Sistema = @Sistema;
+        `);
+
+      // Registrar evento en bitácora
+      await new sql.Request(transaction)
+        .input("Cuenta", sql.VarChar(10), cuenta)
+        .input("Sistema", sql.Int, sistema).query(`
+          INSERT INTO Transacciones_MantenedorUsuarios
+          (Codigo_Area, Fecha, Estacion, Tabla, Accion, Observacion, MiSql)
+          VALUES
+          ('1', GETDATE(), 'Administrador', 'Permisos y Usuario', 'Elimina', 
+           LEFT(CONCAT('Eliminación usuario: ', @Cuenta, ' del Sistema: ', @Sistema), 250), 
+           'DELETE POR SISTEMA');
+        `);
+
+      await transaction.commit();
+
+      // Auditoría
+      await this.auditoriaRepo.createAuditoria({
+        id_usuario: idUsuarioAuditoria,
+        registro: "ELIMINAR_USUARIO_SISTEMA_CAS",
+        descripcion: `Eliminación usuario ${cuenta} del sistema ${sistema}`,
+      });
+    } catch (err) {
+      if (transaction) await transaction.rollback();
+      throw err;
+    }
+  }
+
+  /**
+   * ELIMINAR 2: Eliminar usuario completamente de TODOS los sistemas
+   */
+  async eliminarUsuarioGlobal(
+    cuenta: string,
+    idUsuarioAuditoria: string,
+  ): Promise<void> {
+    const pool = await connectToDB("comun");
+    if (!pool) throw new Error("Error de conexión a BD Comun");
+
+    const transaction = new sql.Transaction(pool);
+
+    try {
+      await transaction.begin();
+
+      // Validar existencia del usuario
+      const checkParams = await new sql.Request(transaction)
+        .input("Cuenta", sql.VarChar(10), cuenta)
+        .query(`SELECT 1 FROM Usuario WHERE Usuar_Cuenta = @Cuenta`);
+
+      if (checkParams.recordset.length === 0) {
+        throw new Error(`El usuario ${cuenta} no existe en ningún sistema.`);
+      }
+
+      // Eliminar permisos asociados (Respetar Límite 6 Permisos)
+      await new sql.Request(transaction).input(
+        "Cuenta",
+        sql.VarChar(10),
+        cuenta,
+      ).query(`
+          DELETE FROM Permisos 
+          WHERE Menu_UserID = LEFT(@Cuenta, 6);
+        `);
+
+      // Eliminar usuario
+      await new sql.Request(transaction).input(
+        "Cuenta",
+        sql.VarChar(10),
+        cuenta,
+      ).query(`
+          DELETE FROM Usuario 
+          WHERE Usuar_Cuenta = @Cuenta;
+        `);
+
+      // Registrar evento en bitácora
+      await new sql.Request(transaction).input(
+        "Cuenta",
+        sql.VarChar(10),
+        cuenta,
+      ).query(`
+          INSERT INTO Transacciones_MantenedorUsuarios
+          (Codigo_Area, Fecha, Estacion, Tabla, Accion, Observacion, MiSql)
+          VALUES
+          ('1', GETDATE(), 'Administrador', 'Permisos y Usuario', 'Elimina', 
+           LEFT(CONCAT('Eliminación total de usuario: ', @Cuenta), 250), 
+           'DELETE');
+        `);
+
+      await transaction.commit();
+
+      // Auditoría
+      await this.auditoriaRepo.createAuditoria({
+        id_usuario: idUsuarioAuditoria,
+        registro: "ELIMINAR_USUARIO_GLOBAL_CAS",
+        descripcion: `Eliminación total del usuario ${cuenta}`,
       });
     } catch (err) {
       if (transaction) await transaction.rollback();
