@@ -1,6 +1,7 @@
 import sql from "mssql";
 import { connectToDB } from "../lib/utils/db-connection";
 import { TitularRepository } from "./titular.repository";
+import { formatRutForDb } from "../lib/utils/validations";
 
 export interface FirmanteDB {
   Codigo_Area: string;
@@ -82,17 +83,8 @@ export class FirmanteRepository {
     console.log(">>> Titular Alcalde:", alcalde);
     console.log(">>> Titular Subrogante:", subrogante);
 
-    const formatRut = (rut: string) => {
-      const cleanRut = rut.replace(/\./g, "");
-      const parts = cleanRut.split("-");
-
-      return (
-        parts[0].padStart(9, "0") + (parts.length > 1 ? "-" + parts[1] : "")
-      );
-    };
-
-    const rutAlcalde = formatRut(alcalde.rut);
-    const rutSubrogante = formatRut(subrogante.rut);
+    const rutAlcalde = formatRutForDb(alcalde.rut);
+    const rutSubrogante = formatRutForDb(subrogante.rut);
     const idAlcalde = alcalde.usuario;
     const idSubrogante = subrogante.usuario;
     const nombreAlcalde = alcalde.nombre.toUpperCase();

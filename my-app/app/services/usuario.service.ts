@@ -14,6 +14,7 @@ export interface CrearUsuarioDTO {
 export interface ActualizarUsuarioDTO {
   id_usuario: string;
   nombre: string;
+  usuario: string;
   email: string;
   id_rol?: string | null;
   activo: boolean;
@@ -63,10 +64,12 @@ export class UsuarioService {
       .request()
       .input("id", sql.UniqueIdentifier, data.id_usuario)
       .input("nombre", sql.VarChar, data.nombre)
+      .input("usuario", sql.VarChar, data.usuario)
       .input("email", sql.VarChar, data.email)
       .input("id_rol", sql.UniqueIdentifier, data.id_rol).query(`
         UPDATE usuario
         SET nombre = @nombre,
+            usuario = @usuario,
             email = @email,
             id_rol = @id_rol
         WHERE id_usuario = @id

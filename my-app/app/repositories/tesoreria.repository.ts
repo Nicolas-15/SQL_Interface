@@ -1,6 +1,7 @@
 import sql from "mssql";
 import { connectToDB } from "../lib/utils/db-connection";
 import { AuditoriaRepository } from "./auditoria.repository";
+import { formatRutForDb } from "../lib/utils/validations";
 
 export interface PagoTesoreriaDB {
   Ano_Proceso: number;
@@ -36,11 +37,13 @@ export class TesoreriaRepository {
     const pool = await connectToDB("comun");
     if (!pool) return [];
 
+    const formattedRut = formatRutForDb(rut);
+
     const result = await pool
       .request()
       .input("NumeroCaja", sql.Int, numeroCaja)
       .input("FolioCaja", sql.Int, folioCaja)
-      .input("RutCont", sql.VarChar(20), rut)
+      .input("RutCont", sql.VarChar(20), formattedRut)
       .input("FechaAct", sql.Date, fecha).query(`
         SELECT
           Ano_Proceso,
@@ -102,19 +105,18 @@ export class TesoreriaRepository {
       throw new Error("No hay registros coincidentes para reversar.");
     }
 
+    const formattedRut = formatRutForDb(rut);
+
     const transaction = new sql.Transaction(pool);
     try {
       await transaction.begin();
-      let filterSql = "";
-      if (items && items.length > 0) {
-      }
 
       if (items && items.length > 0) {
         for (const item of items) {
           await new sql.Request(transaction)
             .input("NumeroCaja", sql.Int, numeroCaja)
             .input("FolioCaja", sql.Int, folioCaja)
-            .input("RutCont", sql.VarChar(20), rut)
+            .input("RutCont", sql.VarChar(20), formattedRut)
             .input("FechaAct", sql.Date, fecha)
             .input("OrdenIngreso", sql.Int, item.orden)
             .input("ItemPago", sql.VarChar(20), String(item.item)).query(`
@@ -135,7 +137,7 @@ export class TesoreriaRepository {
         const result = await new sql.Request(transaction)
           .input("NumeroCaja", sql.Int, numeroCaja)
           .input("FolioCaja", sql.Int, folioCaja)
-          .input("RutCont", sql.VarChar(20), rut)
+          .input("RutCont", sql.VarChar(20), formattedRut)
           .input("FechaAct", sql.Date, fecha).query(`
             UPDATE EncabezadoDeudoresMunicipales
             SET
@@ -156,13 +158,19 @@ export class TesoreriaRepository {
 
       const tipoReverso = items ? "PARCIAL" : "TOTAL";
 
+      const itemsDesc = items
+        ? `Items: ${items.map((i) => `${i.orden}/${i.item}`).join(", ")}`
+        : "Folio Completo";
+
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuario,
+        modulo: "TESORERIA",
         registro: "REVERSO_PAGO_TESORERIA",
         descripcion:
-          `Reverso ${tipoReverso} Caja:${numeroCaja} Folio:${folioCaja} RUT:${rut}. Registros reversados: ${pagosAReversar.length}. Datos Previos: ${JSON.stringify(
-            pagosAReversar,
-          )}`.substring(0, 250),
+          `Reverso ${tipoReverso} Caja:${numeroCaja} Folio:${folioCaja} RUT:${rut}. ${itemsDesc}.`.substring(
+            0,
+            2000,
+          ),
       });
     } catch (err) {
       try {

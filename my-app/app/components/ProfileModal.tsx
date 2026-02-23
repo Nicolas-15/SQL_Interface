@@ -87,12 +87,16 @@ export default function ProfileModal({ user, onClose }: ProfileModalProps) {
 
             {/* Correo Electronico*/}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="profile-email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Correo Electrónico
               </label>
               <div className="relative">
                 <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
+                  id="profile-email"
                   name="email"
                   type="email"
                   value={formData.email}
@@ -107,7 +111,10 @@ export default function ProfileModal({ user, onClose }: ProfileModalProps) {
 
             {/* Contraseña */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="profile-password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Nueva Contraseña
               </label>
               <div className="relative">

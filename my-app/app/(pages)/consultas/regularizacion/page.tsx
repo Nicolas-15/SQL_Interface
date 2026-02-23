@@ -1,6 +1,8 @@
+import { protectPage } from "@/app/lib/utils/auth-server";
 import RegularizacionClient from "./RegularizacionClient";
 
-export default function RegularizacionPage() {
+export default async function RegularizacionPage() {
+  await protectPage("/consultas/regularizacion");
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="space-y-2">

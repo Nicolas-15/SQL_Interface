@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Glow azul desde arriba */}
         <div className="absolute top-0 mx-auto left-1/4 w-96 h-96 bg-blue-500/15 rounded-full blur-[60px] -translate-y-1/2" />
-        
+
         <div className="absolute top-0 mx-auto right-1/4 w-96 h-96 bg-blue-500/15 rounded-full blur-[60px] -translate-y-1/2" />
 
         {/* Glow púrpura desde abajo */}
@@ -19,18 +19,17 @@ export default function Footer() {
 
         <div className="flex flex-col items-center gap-4 text-center text-white text-sm">
           {/* Logo */}
-          <div className="relative w-16 h-16">
+          <div className="relative pt-4">
             <Image
               src="/iconofooter.png"
               alt="Escudo Municipalidad"
-              width={70}
-              height={70}
+              width={90}
+              height={90}
             />
           </div>
-
           {/* Texto */}
           <p className="text-center text-white text-sm">
-            &copy; {new Date().getFullYear()} SQL Interface.
+            &copy; {new Date().getFullYear()} APLICAS
             <br />
             Todos los derechos reservados.
           </p>

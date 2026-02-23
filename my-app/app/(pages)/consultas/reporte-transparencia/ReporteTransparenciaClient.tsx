@@ -8,6 +8,7 @@ import {
 } from "@/app/lib/action/reporte.action";
 import ExcelJS from "exceljs";
 import { IconFileDescription } from "@tabler/icons-react";
+import Skeleton from "@/app/components/Skeleton";
 
 type Reporte = {
   Comuna: string;
@@ -325,14 +326,22 @@ export default function ReporteTransparenciaClient() {
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 mb-8 w-full">
         <div className="flex justify-between w-full gap-4">
           <div className="w-1/3 ">
-            <label className="block text-sm font-medium text-gray-700 mb-1 ">
+            <label
+              htmlFor="fecha-inicio"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Fecha Inicio
             </label>
             <input
+              id="fecha-inicio"
               type="date"
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
-              className="border rounded-lg px-4 py-2 w-full"
+              min={rangoDisponible.min || "2000-01-01"}
+              max={
+                rangoDisponible.max || new Date().toISOString().split("T")[0]
+              }
+              className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none"
             />
             {rangoDisponible.min && rangoDisponible.max && (
               <span className="text-md text-blue-600 block mt-1">
@@ -341,21 +350,33 @@ export default function ReporteTransparenciaClient() {
             )}
           </div>
           <div className="w-1/3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="fecha-fin"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Fecha Fin
             </label>
             <input
+              id="fecha-fin"
               type="date"
               value={fechaFin}
               onChange={(e) => setFechaFin(e.target.value)}
-              className="border rounded-lg px-4 py-2 w-full"
+              min={rangoDisponible.min || "2000-01-01"}
+              max={
+                rangoDisponible.max || new Date().toISOString().split("T")[0]
+              }
+              className="border rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
           <div className="w-1/3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="comuna"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Comuna
             </label>
             <input
+              id="comuna"
               type="text"
               value={comuna}
               disabled
@@ -527,8 +548,25 @@ export default function ReporteTransparenciaClient() {
         </div>
       )}
 
-      {/* Tabla - Vista previa limitada */}
-      {reportes.length > 0 && (
+      {/* Tabla - Vista previa limitada o Skeleton */}
+      {loading ? (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col">
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center rounded-t-2xl">
+            <Skeleton width={150} height={24} />
+            <Skeleton width={100} height={16} />
+          </div>
+          <div className="p-4 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <Skeleton height={40} className="flex-1" />
+                <Skeleton height={40} className="flex-1" />
+                <Skeleton height={40} className="flex-1" />
+                <Skeleton height={40} className="flex-1" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : reportes.length > 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col max-h-[600px]">
           <div className="p-4 border-b bg-gray-50 flex justify-between items-center shrink-0 rounded-t-2xl">
             <h3 className="font-semibold text-gray-700">
@@ -556,7 +594,10 @@ export default function ReporteTransparenciaClient() {
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {reportes.slice(0, 50).map((r, i) => (
-                  <tr key={i} className="hover:bg-blue-50 transition-colors">
+                  <tr
+                    key={i}
+                    className="hover:bg-blue-50/50 hover:scale-[1.001] transition-all duration-200 animate-in slide-in-from-top-1"
+                  >
                     {columnasSeleccionadas.map((col) => {
                       const val = r[col];
                       const isMoney = [
@@ -615,7 +656,7 @@ export default function ReporteTransparenciaClient() {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

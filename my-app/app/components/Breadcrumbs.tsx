@@ -11,6 +11,7 @@ const routeLabels: Record<string, string> = {
   "intercambiar-titular": "Intercambiar Titular",
   "reporte-transparencia": "Reporte Transparencia",
   "regularizar-folio": "Regularizar Folio",
+  regularizacion: "Regularización de Pagos",
 };
 
 export default function Breadcrumbs() {
@@ -27,6 +28,7 @@ export default function Breadcrumbs() {
 
   const crumbs = segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
+
     const label =
       routeLabels[segment] ||
       segment.charAt(0).toUpperCase() + segment.slice(1);

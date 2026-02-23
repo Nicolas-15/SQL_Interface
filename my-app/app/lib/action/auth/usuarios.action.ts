@@ -6,14 +6,25 @@ import { revalidatePath } from "next/cache";
 import { hashPassword } from "@/app/lib/utils/hash";
 import { connectToDB } from "@/app/lib/utils/db-connection";
 import { protectAction } from "@/app/lib/utils/auth-server";
+import { AuditoriaRepository } from "@/app/repositories/auditoria.repository";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
 import sql from "mssql";
 
 const usuarioService = new UsuarioService();
+const auditoriaRepo = new AuditoriaRepository();
 
 export async function eliminarUsuarioAction(id: string) {
   try {
-    await protectAction("/usuarios");
+    const session = await protectAction("/usuarios");
     await usuarioService.eliminarUsuario(id);
+
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session.id,
+      modulo: "USUARIOS",
+      registro: "ELIMINAR_USUARIO",
+      descripcion: `Eliminación de usuario ID: ${id}`,
+    });
+
     revalidatePath("/usuarios");
     return { success: true, message: "Usuario eliminado de la base de datos" };
   } catch (error: unknown) {
@@ -39,10 +50,29 @@ export async function crearUsuarioAction(formData: FormData) {
     const email = String(formData.get("email") ?? "").trim();
     const rol = String(formData.get("rol") ?? "").trim();
 
+    const usuario = String(formData.get("usuario") ?? email)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+    if (usuario.length > 6) {
+      return {
+        error: "El nombre de usuario no puede exceder los 6 caracteres.",
+      };
+    }
+    if (usuario.length < 3) {
+      return {
+        error: "El nombre de usuario debe tener al menos 3 caracteres.",
+      };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { error: "El correo electrónico no tiene un formato válido." };
+    }
+
     // Generar contraseña aleatoria segura (8 caracteres)
     const password = Math.random().toString(36).slice(-8);
-
-    const usuario = email;
 
     // Buscar id_rol a partir del nombre_rol
     let id_rol: string | null = null;
@@ -57,6 +87,15 @@ export async function crearUsuarioAction(formData: FormData) {
       email,
       password,
       id_rol,
+    });
+
+    const session = await getSessionUserAction();
+
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session?.id || "",
+      modulo: "USUARIOS",
+      registro: "CREAR_USUARIO",
+      descripcion: `Creación de usuario: ${usuario} (${nombre})`,
     });
 
     // Enviar correo de bienvenida con credenciales
@@ -119,14 +158,45 @@ export async function actualizarUsuarioAction(formData: FormData) {
       }
     }
 
+    const usuario = String(formData.get("usuario") ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+    if (usuario.length > 6) {
+      return {
+        error: "El nombre de usuario no puede exceder los 6 caracteres.",
+      };
+    }
+    if (usuario.length < 3) {
+      return {
+        error: "El nombre de usuario debe tener al menos 3 caracteres.",
+      };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { error: "El correo electrónico no tiene un formato válido." };
+    }
+
     const activo = estado === "Activo";
 
     await usuarioService.actualizarUsuario({
       id_usuario,
       nombre,
+      usuario,
       email,
       id_rol,
       activo,
+    });
+
+    const session = await getSessionUserAction();
+
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session?.id || "",
+      modulo: "USUARIOS",
+      registro: "ACTUALIZAR_USUARIO",
+      descripcion: `Actualización de usuario: ${usuario} (ID: ${id_usuario})`,
     });
 
     // Si el usuario editado es el usuario logueado, regenerar el JWT
@@ -217,6 +287,14 @@ export async function enviarRecuperacionAction(email: string) {
 
     // 4. Enviar correo
     await sendNewPasswordEmail(email, user.nombre, newPassword);
+
+    const session = await getSessionUserAction();
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session?.id || "",
+      modulo: "USUARIOS",
+      registro: "RESET_PASSWORD_ADMIN",
+      descripcion: `Reinicio de contraseña administrativo para: ${email}`,
+    });
 
     return {
       success: true,

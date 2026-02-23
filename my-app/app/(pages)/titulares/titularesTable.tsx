@@ -7,6 +7,7 @@ import { cambiarTitularAction } from "@/app/lib/action/auth/titulares.action";
 
 import { toast } from "react-toastify";
 import ConfirmationToast from "@/app/components/ConfirmationToast";
+import { formatRut, validarRut } from "@/app/lib/utils/validations";
 
 type Props = {
   titulares: TitularDB[];
@@ -27,6 +28,7 @@ export default function TitularesTable({ titulares }: Props) {
     id_rol: "",
     usuario: "",
   });
+  const [rutError, setRutError] = useState("");
 
   const handleEdit = (t: TitularDB) => {
     setEditing(t);
@@ -73,9 +75,9 @@ export default function TitularesTable({ titulares }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto py-6 sm:py-8">
       {/* Tabla */}
-      <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+      <div className="overflow-x-auto bg-white rounded-xl shadow-md py-2">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
             <tr>
@@ -111,6 +113,8 @@ export default function TitularesTable({ titulares }: Props) {
                   <button
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs transition"
                     onClick={() => handleEdit(t)}
+                    title={`Editar titular ${t.nombre}`}
+                    aria-label={`Editar titular ${t.nombre}`}
                   >
                     Editar
                   </button>
@@ -124,43 +128,83 @@ export default function TitularesTable({ titulares }: Props) {
       {/* Modal de edición */}
       {editing && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
             <h2 className="text-lg font-bold mb-4">Editar Titular</h2>
 
-            <label className="block mb-3 text-sm font-medium">
+            <label
+              htmlFor="edit-nombre"
+              className="block mb-3 text-sm font-medium"
+            >
               Nombre
               <input
+                id="edit-nombre"
                 type="text"
                 value={formData.nombre}
                 onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
+                  setFormData({
+                    ...formData,
+                    nombre: e.target.value.slice(0, 100),
+                  })
                 }
+                maxLength={100}
                 className="mt-1 border border-gray-300 rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </label>
 
-            <label className="block mb-3 text-sm font-medium">
+            <label
+              htmlFor="edit-rut"
+              className="block mb-3 text-sm font-medium"
+            >
               RUT
               <input
+                id="edit-rut"
                 type="text"
                 value={formData.rut}
-                onChange={(e) =>
-                  setFormData({ ...formData, rut: e.target.value })
-                }
-                className="mt-1 border border-gray-300 rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => {
+                  const formatted = formatRut(e.target.value);
+                  setFormData({ ...formData, rut: formatted });
+                  if (formatted.length > 7) {
+                    setRutError(validarRut(formatted) ? "" : "RUT inválido");
+                  } else {
+                    setRutError("");
+                  }
+                }}
+                maxLength={12}
+                className={`mt-1 border rounded-md p-2 w-full focus:outline-none focus:ring-2 transition-all ${
+                  rutError
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
+                placeholder="12.345.678-9"
               />
+              {rutError && (
+                <p className="text-[10px] text-red-500 mt-0.5">{rutError}</p>
+              )}
             </label>
 
-            <label className="block mb-3 text-sm font-medium">
+            <label
+              htmlFor="edit-usuario"
+              className="block mb-3 text-sm font-medium"
+            >
               Usuario
               <input
+                id="edit-usuario"
                 type="text"
                 value={formData.usuario}
-                onChange={(e) =>
-                  setFormData({ ...formData, usuario: e.target.value })
-                }
+                onChange={(e) => {
+                  const val = e.target.value
+                    .slice(0, 8)
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, "");
+                  setFormData({ ...formData, usuario: val });
+                }}
+                maxLength={8}
                 className="mt-1 border border-gray-300 rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Máx. 8 carac."
               />
+              <p className="text-[10px] text-gray-500 mt-1">
+                Límite: {formData.usuario.length}/8 caracteres
+              </p>
             </label>
 
             <p className="mt-2 text-sm text-gray-600">

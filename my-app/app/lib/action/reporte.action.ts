@@ -2,13 +2,25 @@
 
 import { PermisoRepository } from "@/app/repositories/permiso.repository";
 import { protectAction } from "@/app/lib/utils/auth-server";
+import { AuditoriaRepository } from "@/app/repositories/auditoria.repository";
+import { getSessionUserAction } from "./auth/session.action";
+
+const auditoriaRepo = new AuditoriaRepository();
 
 export async function obtenerReporteTransparenciaAction(
   fechaInicio: string,
   fechaFin: string,
 ) {
   try {
-    await protectAction("/consultas/reporte-transparencia");
+    const session = await protectAction("/consultas/reporte-transparencia");
+
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session.id,
+      modulo: "REPORTES",
+      registro: "GENERAR_REPORTE",
+      descripcion: `Generación de reporte de transparencia entre ${fechaInicio} y ${fechaFin}`,
+    });
+
     const repo = new PermisoRepository();
     const reportes = await repo.obtenerReporteTransparencia(
       fechaInicio,

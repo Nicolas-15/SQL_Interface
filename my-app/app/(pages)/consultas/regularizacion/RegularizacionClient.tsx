@@ -14,6 +14,7 @@ import {
   IconInfoCircle,
   IconAlertTriangle,
   IconCheck,
+  IconSearchOff,
 } from "@tabler/icons-react";
 import { formatRut, validarRut } from "@/app/lib/utils/validations";
 
@@ -199,13 +200,8 @@ export default function RegularizacionClient() {
                 type="number"
                 required
                 min="1"
-                max="9999"
                 defaultValue={searchParams.caja}
                 className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                onInput={(e) => {
-                  if (e.currentTarget.value.length > 4)
-                    e.currentTarget.value = e.currentTarget.value.slice(0, 4);
-                }}
               />
             </div>
             <div>
@@ -217,13 +213,8 @@ export default function RegularizacionClient() {
                 type="number"
                 required
                 min="1"
-                max="99999999"
                 defaultValue={searchParams.folio}
                 className="w-full border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                onInput={(e) => {
-                  if (e.currentTarget.value.length > 8)
-                    e.currentTarget.value = e.currentTarget.value.slice(0, 8);
-                }}
               />
             </div>
             <div>
@@ -353,7 +344,7 @@ export default function RegularizacionClient() {
                     return (
                       <tr
                         key={`${row.Orden_Ingreso}-${row.Item_Pago}`}
-                        className={`transition-colors ${selected ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                        className={`transition-all duration-200 ${selected ? "bg-blue-50/80" : "hover:bg-blue-50/30 hover:scale-[1.001] group"}`}
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <input
@@ -543,14 +534,14 @@ export default function RegularizacionClient() {
       ) : (
         /* Empty State */
         !loading && (
-          <div className="bg-gray-50 p-12 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-center text-gray-500">
-            <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-              <IconSearch className="w-8 h-8 text-gray-400" />
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-20 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
+            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 shadow-inner mb-4">
+              <IconSearchOff className="w-8 h-8 text-gray-300" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
+            <h3 className="text-xl font-bold text-gray-900 mb-1">
               Sin resultados para mostrar
             </h3>
-            <p className="text-sm max-w-sm mx-auto">
+            <p className="text-sm text-gray-400 max-w-sm mx-auto">
               Utiliza el formulario superior para buscar pagos por Caja, Folio,
               RUT y Fecha.
             </p>

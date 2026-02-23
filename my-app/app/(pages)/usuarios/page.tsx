@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 type DBUser = {
   id_usuario: string;
   nombre: string;
+  usuario: string;
   email: string;
   activo: boolean | number;
   id_rol: string;
@@ -17,7 +18,7 @@ export async function getUsers(): Promise<User[]> {
   if (!db) throw new Error("No DB connection");
 
   const result = await db.request().query(`
-      SELECT u.id_usuario, u.nombre, u.email, u.activo, u.id_rol, r.nombre_rol
+      SELECT u.id_usuario, u.nombre, u.usuario, u.email, u.activo, u.id_rol, r.nombre_rol
       FROM usuario u
       LEFT JOIN [app_Interface].[dbo].[rol] r ON r.id_rol = u.id_rol
     `);
@@ -26,6 +27,7 @@ export async function getUsers(): Promise<User[]> {
     (u) => ({
       id: u.id_usuario,
       name: u.nombre,
+      usuario: u.usuario,
       email: u.email,
       rol: u.nombre_rol || "Sin rol",
       estado: Boolean(u.activo) ? "Activo" : "Inactivo",

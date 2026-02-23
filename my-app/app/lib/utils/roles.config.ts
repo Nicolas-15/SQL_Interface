@@ -50,10 +50,10 @@ const rutasPermitidas: Record<string, string[]> = {
     "/consultas/intercambiar-titular",
     "/consultas/reporte-transparencia",
     "/consultas/regularizar-folio",
-    "/tesoreria/regularizacion",
+    "/consultas/regularizacion",
     "/consultas/gestion-cas",
   ],
-  [ROLES.TESORERIA]: ["/consultas", "/tesoreria/regularizacion"],
+  [ROLES.TESORERIA]: ["/consultas", "/consultas/regularizacion"],
   [ROLES.TRANSITO]: ["/consultas", "/consultas/reporte-transparencia"],
   [ROLES.FINANZAS]: ["/consultas", "/consultas/regularizar-folio"],
   [ROLES.ADMINISTRACION_MUNICIPAL]: [
@@ -74,12 +74,7 @@ export function tieneAcceso(nombreRol: string | null, ruta: string): boolean {
 
     // Si la ruta permitida es una base general, requerimos coincidencia exacta.
     // Esto evita que "/consultas" autorice por error "/consultas/reporte-transparencia"
-    const basesGenerales = [
-      "/consultas",
-      "/usuarios",
-      "/titulares",
-      "/tesoreria",
-    ];
+    const basesGenerales = ["/consultas", "/usuarios", "/titulares"];
     if (basesGenerales.includes(r)) return false;
 
     // Para rutas específicas (ej: /consultas/reporte-transparencia), permite subrutas
@@ -124,7 +119,7 @@ export function getModulosConsultas(nombreRol: string | null) {
       titulo: "Regularización Pagos Inconclusos Módulo de Tesorería",
       descripcion:
         "Eliminación de registros de pagos inconclusos para su regularización",
-      href: "/tesoreria/regularizacion",
+      href: "/consultas/regularizacion",
       color: "green",
       disponible: true,
     },
@@ -170,6 +165,13 @@ export function getCardsHome(nombreRol: string | null) {
         "Administración de autoridades habilitadas para firma de Decreto Pago Web.",
       href: "/titulares",
     },
+    {
+      id: "auditoria",
+      title: "Control de Auditoría",
+      description:
+        "Seguimiento exhaustivo de cambios, accesos y operaciones críticas en la plataforma.",
+      href: "/auditoria",
+    },
   ];
 
   if (!nombreRol || nombreRol === ROLES.ADMIN) return cards;
@@ -178,5 +180,25 @@ export function getCardsHome(nombreRol: string | null) {
 
   return cards.filter((card) =>
     rutas.some((r) => r === card.href || r.startsWith(card.href + "/")),
+  );
+}
+
+/**
+ * Retorna los links de navegación principal para el Navbar/Header.
+ */
+export function getNavLinks(nombreRol: string | null) {
+  const allLinks = [
+    { href: "/consultas", label: "Consultas" },
+    { href: "/usuarios", label: "Usuarios" },
+    { href: "/titulares", label: "Firmantes" },
+    { href: "/consultas/regularizacion", label: "Tesorería" },
+    { href: "/auditoria", label: "Bitácora" },
+  ];
+
+  if (!nombreRol || nombreRol === ROLES.ADMIN) return allLinks;
+
+  const rutas = rutasPermitidas[nombreRol] || [];
+  return allLinks.filter((link) =>
+    rutas.some((r) => r === link.href || r.startsWith(link.href + "/")),
   );
 }

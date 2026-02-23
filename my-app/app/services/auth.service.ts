@@ -59,13 +59,6 @@ export class AuthService {
       nombre_rol: usuario.nombre_rol,
     });
 
-    //Registrar auditoría
-    await this.auditoriaRepo.createAuditoria({
-      id_usuario: usuario.id_usuario,
-      registro: "LOGIN",
-      descripcion: "Inicio de sesión exitoso",
-    });
-
     //Retorno de los atributos
     return {
       token,
@@ -102,6 +95,7 @@ export class AuthService {
     //Auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
+      modulo: "AUTH",
       registro: "PASSWORD_RESET_REQUEST",
       descripcion: "Solicitud de recuperación de contraseña (Código)",
     });
@@ -134,6 +128,7 @@ export class AuthService {
     //Auditoría
     await this.auditoriaRepo.createAuditoria({
       id_usuario: usuario.id_usuario,
+      modulo: "AUTH",
       registro: "PASSWORD_RESET_SUCCESS",
       descripcion: "Contraseña restablecida exitosamente",
     });
@@ -158,6 +153,7 @@ export class AuthService {
 
     await this.auditoriaRepo.createAuditoria({
       id_usuario,
+      modulo: "AUTH",
       registro: "PROFILE_UPDATE",
       descripcion: "Actualización de perfil (Email/Password)",
     });

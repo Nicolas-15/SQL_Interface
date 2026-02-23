@@ -1,16 +1,18 @@
 // app/home/page.tsx
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { IconUsers, IconNews, IconDatabase } from "@tabler/icons-react";
+import {
+  IconUsers,
+  IconNews,
+  IconDatabase,
+  IconShieldCheck,
+} from "@tabler/icons-react";
 import { getCardsHome } from "@/app/lib/utils/roles.config";
 import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
+import { protectPage } from "@/app/lib/utils/auth-server";
 
 export default async function HomePage() {
-  const sessionUser = await getSessionUserAction();
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
+  const sessionUser = await protectPage("/");
 
   const userName = sessionUser.nombre;
   const nombreRol = sessionUser.nombre_rol;
@@ -28,6 +30,7 @@ export default async function HomePage() {
     "/consultas": <IconDatabase className="w-8 h-8 text-blue-500" />,
     "/usuarios": <IconUsers className="w-8 h-8 text-green-500" />,
     "/titulares": <IconNews className="w-8 h-8 text-yellow-500" />,
+    "/auditoria": <IconShieldCheck className="w-8 h-8 text-gray-500" />,
   };
 
   const visibleCards = getCardsHome(nombreRol);

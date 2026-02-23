@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 import { getModulosConsultas } from "@/app/lib/utils/roles.config";
 import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
+import { protectPage } from "@/app/lib/utils/auth-server";
 
 const iconMap: Record<string, React.ReactNode> = {
   blue: (
@@ -41,11 +42,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default async function Consultas() {
-  const sessionUser = await getSessionUserAction();
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
+  const sessionUser = await protectPage("/consultas");
 
   const nombreRol = sessionUser.nombre_rol;
 

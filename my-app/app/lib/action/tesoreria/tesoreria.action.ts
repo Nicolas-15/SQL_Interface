@@ -8,7 +8,7 @@ const repo = new TesoreriaRepository();
 
 export async function previewPagoTesoreriaAction(formData: FormData) {
   try {
-    await protectAction("/tesoreria/regularizacion");
+    await protectAction("/consultas/regularizacion");
     const caja = Number(formData.get("caja"));
     const folio = Number(formData.get("folio"));
     const rut = formData.get("rut") as string;
@@ -36,7 +36,7 @@ export async function previewPagoTesoreriaAction(formData: FormData) {
 
 export async function reversarPagoTesoreriaAction(formData: FormData) {
   try {
-    const session = await protectAction("/tesoreria/regularizacion");
+    const session = await protectAction("/consultas/regularizacion");
 
     const caja = Number(formData.get("caja"));
     const folio = Number(formData.get("folio"));
@@ -62,7 +62,7 @@ export async function reversarPagoTesoreriaAction(formData: FormData) {
 
     await repo.reversarPago(caja, folio, rut, fecha, session.id, items);
 
-    revalidatePath("/tesoreria/regularizacion");
+    revalidatePath("/consultas/regularizacion");
     return { success: true, message: "Pago reversado exitosamente." };
   } catch (error: any) {
     console.error(error);

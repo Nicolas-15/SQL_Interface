@@ -3,43 +3,63 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/context/UserContext";
-import { tieneAcceso } from "@/app/lib/utils/roles.config";
+import { getNavLinks } from "@/app/lib/utils/roles.config";
+import {
+  IconLayout2,
+  IconUsers,
+  IconClipboardList,
+  IconReceiptDollar,
+  IconShieldCheck,
+} from "@tabler/icons-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user } = useUser();
 
-  const allLinks = [
-    { href: "/consultas", label: "Consultas" },
-    { href: "/usuarios", label: "Usuarios" },
-    { href: "/titulares", label: "Titulares" },
-    { href: "/tesoreria/regularizacion", label: "Tesorería" },
-  ];
+  if (!user) return null;
 
-  // Filtrar links según el rol del usuario
-  const links = allLinks.filter((link) =>
-    tieneAcceso(user?.nombre_rol ?? null, link.href),
-  );
+  const navLinks = getNavLinks(user?.nombre_rol ?? null);
 
-  if (links.length === 0) return null;
+  const iconMap: Record<string, any> = {
+    "/consultas": IconLayout2,
+    "/usuarios": IconUsers,
+    "/titulares": IconClipboardList,
+    "/consultas/regularizacion": IconReceiptDollar,
+    "/auditoria": IconShieldCheck,
+  };
+
+  const links = navLinks.map((link) => ({
+    ...link,
+    icon: iconMap[link.href] || IconLayout2,
+  }));
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
+    <nav className="hidden lg:block bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center space-x-4 py-2">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                pathname === link.href
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="flex items-center space-x-2 py-1">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive =
+              pathname === link.href ||
+              (link.href !== "/" && pathname.startsWith(link.href));
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-all border-b-2 ${
+                  isActive
+                    ? "border-blue-600 text-blue-600 bg-blue-50/30"
+                    : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-gray-400"}`}
+                />
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </nav>

@@ -4,8 +4,11 @@ import { FirmanteRepository } from "@/app/repositories/firmante.repository";
 import { protectAction } from "@/app/lib/utils/auth-server";
 import { revalidatePath } from "next/cache";
 import { TitularRepository } from "@/app/repositories/titular.repository";
+import { AuditoriaRepository } from "@/app/repositories/auditoria.repository";
+import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
 
 const repo = new FirmanteRepository();
+const auditoriaRepo = new AuditoriaRepository();
 
 /** Obtener titular actual */
 export async function obtenerTitularActualAction() {
@@ -25,6 +28,15 @@ export async function intercambiarTitularesAction(cargo: string | null) {
     await protectAction("/consultas/intercambiar-titular");
     if (!cargo) throw new Error("Parámetro cargo es requerido");
     await repo.intercambiarTitularidad(cargo);
+
+    const session = await getSessionUserAction();
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session?.id || "",
+      modulo: "TITULARES",
+      registro: "INTERCAMBIO_TITULARIDAD",
+      descripcion: `Intercambio de firmas/titularidad completado para cargo: ${cargo}`,
+    });
+
     return { success: true };
   } catch (err) {
     console.error(err);
@@ -41,6 +53,12 @@ export async function cambiarTitularAction(
   esTitular: boolean,
 ) {
   const repo = new TitularRepository();
+  const { validarRut } = require("@/app/lib/utils/validations");
+
+  if (!validarRut(rut)) {
+    return { error: "El RUT ingresado no es válido." };
+  }
+
   try {
     await protectAction("/consultas/intercambiar-titular");
     await repo.changeTitular({
@@ -50,6 +68,15 @@ export async function cambiarTitularAction(
       usuario,
       esTitular,
     });
+
+    const session = await getSessionUserAction();
+    await auditoriaRepo.createAuditoria({
+      id_usuario: session?.id || "",
+      modulo: "TITULARES",
+      registro: "CAMBIO_TITULAR",
+      descripcion: `Cambio de datos del titular: ${nombre} (${usuario})`,
+    });
+
     return { success: true };
   } catch (err) {
     console.error(err);

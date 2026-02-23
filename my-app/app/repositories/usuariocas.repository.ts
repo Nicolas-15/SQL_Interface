@@ -141,6 +141,7 @@ export class UsuarioRepository {
       // Auditoría del sistema nuevo
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuarioAuditoria,
+        modulo: "USUARIOS_CAS",
         registro: "REPLICA_PERMISOS",
         descripcion: `Replica de permisos desde ${origen} hacia ${destino} en sistema ${sistema}`,
       });
@@ -240,6 +241,7 @@ export class UsuarioRepository {
       // Auditoría
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuarioAuditoria,
+        modulo: "USUARIOS_CAS",
         registro: "CREAR_USUARIO_CAS",
         descripcion: `Creación usuario ${nuevoUsuario.cuenta} copiando de ${nuevoUsuario.base} en sistema ${sistema}`,
       });
@@ -314,6 +316,7 @@ export class UsuarioRepository {
       // Auditoría
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuarioAuditoria,
+        modulo: "USUARIOS_CAS",
         registro: "ELIMINAR_USUARIO_SISTEMA_CAS",
         descripcion: `Eliminación usuario ${cuenta} del sistema ${sistema}`,
       });
@@ -386,6 +389,7 @@ export class UsuarioRepository {
       // Auditoría
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuarioAuditoria,
+        modulo: "USUARIOS_CAS",
         registro: "ELIMINAR_USUARIO_GLOBAL_CAS",
         descripcion: `Eliminación total del usuario ${cuenta}`,
       });
