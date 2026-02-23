@@ -46,17 +46,20 @@ export const ROLE_LABELS: Record<string, string> = {
 // ──────────────────────────────────────────────────────────────
 const rutasPermitidas: Record<string, string[]> = {
   [ROLES.SOPORTE]: [
+    "/",
     "/consultas",
     "/consultas/intercambiar-titular",
     "/consultas/reporte-transparencia",
     "/consultas/regularizar-folio",
     "/consultas/regularizacion",
     "/consultas/gestion-cas",
+    "/auditoria",
   ],
-  [ROLES.TESORERIA]: ["/consultas", "/consultas/regularizacion"],
-  [ROLES.TRANSITO]: ["/consultas", "/consultas/reporte-transparencia"],
-  [ROLES.FINANZAS]: ["/consultas", "/consultas/regularizar-folio"],
+  [ROLES.TESORERIA]: ["/", "/consultas", "/consultas/regularizacion"],
+  [ROLES.TRANSITO]: ["/", "/consultas", "/consultas/reporte-transparencia"],
+  [ROLES.FINANZAS]: ["/", "/consultas", "/consultas/regularizar-folio"],
   [ROLES.ADMINISTRACION_MUNICIPAL]: [
+    "/",
     "/consultas",
     "/consultas/intercambiar-titular",
   ],

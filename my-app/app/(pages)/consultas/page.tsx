@@ -8,6 +8,7 @@ import {
   IconUsers,
   IconReceiptDollar,
   IconLock,
+  IconShieldCheck,
 } from "@tabler/icons-react";
 import { getModulosConsultas } from "@/app/lib/utils/roles.config";
 import { getSessionUserAction } from "@/app/lib/action/auth/session.action";
@@ -37,6 +38,11 @@ const iconMap: Record<string, React.ReactNode> = {
   purple: (
     <div className="p-3 rounded-xl bg-purple-50">
       <IconUsers className="w-6 h-6 text-purple-700" />
+    </div>
+  ),
+  indigo: (
+    <div className="p-3 rounded-xl bg-indigo-50">
+      <IconShieldCheck className="w-6 h-6 text-indigo-600" />
     </div>
   ),
 };

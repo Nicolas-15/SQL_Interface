@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function AuditoriaPage() {
-  // Solo administradores pueden ver la auditoría
+  // Solo administradores y soporte pueden ver la auditoría
   await protectPage("/auditoria");
 
   const repo = new AuditoriaRepository();
