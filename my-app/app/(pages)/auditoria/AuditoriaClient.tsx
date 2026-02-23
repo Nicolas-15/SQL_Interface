@@ -49,6 +49,8 @@ export default function AuditoriaClient({ initialAudits }: Props) {
   const [search, setSearch] = useState("");
   const [moduloFilter, setModuloFilter] = useState("TODOS");
   const [selectedAudit, setSelectedAudit] = useState<Audit | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredAudits = audits.filter((a) => {
     const matchesSearch =
@@ -62,6 +64,12 @@ export default function AuditoriaClient({ initialAudits }: Props) {
 
     return matchesSearch && matchesModulo;
   });
+
+  const totalPages = Math.ceil(filteredAudits.length / itemsPerPage);
+  const paginatedAudits = filteredAudits.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   const getModuloBadge = (modulo: string) => {
     const styles: Record<string, string> = {
@@ -121,7 +129,10 @@ export default function AuditoriaClient({ initialAudits }: Props) {
             type="text"
             placeholder="Buscar por descripción, acción o ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
           />
         </div>
@@ -130,7 +141,10 @@ export default function AuditoriaClient({ initialAudits }: Props) {
           <IconFilter className="w-4 h-4 text-gray-500" />
           <select
             value={moduloFilter}
-            onChange={(e) => setModuloFilter(e.target.value)}
+            onChange={(e) => {
+              setModuloFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           >
             {MODULOS.map((m) => (
@@ -166,11 +180,11 @@ export default function AuditoriaClient({ initialAudits }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredAudits.length > 0 ? (
-                filteredAudits.map((audit) => (
+              {paginatedAudits.length > 0 ? (
+                paginatedAudits.map((audit) => (
                   <tr
                     key={audit.id_auditoria}
-                    className="hover:bg-blue-50/30 hover:scale-[1.002] transition-all duration-200 group animate-in slide-in-from-top-2"
+                    className="hover:bg-blue-50/30 transition-colors duration-200 group animate-in slide-in-from-top-2"
                   >
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1.5">
@@ -240,6 +254,7 @@ export default function AuditoriaClient({ initialAudits }: Props) {
                         onClick={() => {
                           setSearch("");
                           setModuloFilter("TODOS");
+                          setCurrentPage(1);
                         }}
                         className="text-sm font-bold text-blue-600 hover:text-blue-700 underline underline-offset-4"
                       >
@@ -252,6 +267,61 @@ export default function AuditoriaClient({ initialAudits }: Props) {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 px-6 py-4 bg-gray-50/50 gap-4">
+            <p className="text-sm text-gray-500">
+              Mostrando {(currentPage - 1) * itemsPerPage + 1} a{" "}
+              {Math.min(currentPage * itemsPerPage, filteredAudits.length)} de{" "}
+              {filteredAudits.length} resultados
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Anterior
+              </button>
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (page) =>
+                      page === 1 ||
+                      page === totalPages ||
+                      Math.abs(page - currentPage) <= 1,
+                  )
+                  .map((page, index, array) => (
+                    <span key={page} className="flex items-center gap-1">
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-white border border-transparent hover:border-gray-200"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </span>
+                  ))}
+              </div>
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal de Detalle */}
