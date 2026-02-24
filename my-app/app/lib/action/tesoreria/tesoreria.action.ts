@@ -69,3 +69,17 @@ export async function reversarPagoTesoreriaAction(formData: FormData) {
     return { error: error.message || "Error al reversar el pago." };
   }
 }
+
+export async function deshacerUltimoReversoAction() {
+  try {
+    const session = await protectAction("/consultas/regularizacion");
+
+    await repo.deshacerUltimoReverso(session.id);
+
+    revalidatePath("/consultas/regularizacion");
+    return { success: true, message: "Restauración de emergencia exitosa." };
+  } catch (error: any) {
+    console.error("Error al deshacer reverso:", error);
+    return { error: error.message || "Error al deshacer el reverso." };
+  }
+}

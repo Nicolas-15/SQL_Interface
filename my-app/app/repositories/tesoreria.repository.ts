@@ -162,15 +162,138 @@ export class TesoreriaRepository {
         ? `Items: ${items.map((i) => `${i.orden}/${i.item}`).join(", ")}`
         : "Folio Completo";
 
+      // Guardar el listado de pagos con sus datos originales como JSON para poder restaurarlos
+      // La columna descripcion de la BD tiene límite aparentemente de 2000 caracteres.
+      let pagosAGuardar = pagosAReversar.map((p) => ({
+        NC: p.Numero_Caja,
+        NI: p.Numero_Ingreso,
+        FP: p.Fecha_Pago,
+        OI: p.Orden_Ingreso,
+        IP: p.Item_Pago != null ? String(p.Item_Pago).trim() : "",
+        R: p.Rut != null ? String(p.Rut).trim() : "",
+      }));
+
+      let mensajeBase =
+        `Reverso ${tipoReverso} Caja:${numeroCaja} Folio:${folioCaja} RUT:${rut}. ${itemsDesc}.`.substring(
+          0,
+          150,
+        );
+
+      let datosAuditoria: any = {
+        m: mensajeBase,
+        d: pagosAGuardar,
+      };
+
+      let jsonStr = JSON.stringify(datosAuditoria);
+
+      // Algoritmo de reducción segura de JSON para no sobrepasar el campo Varchar (2000 estricto aprox)
+      while (jsonStr.length > 2000 && pagosAGuardar.length > 1) {
+        pagosAGuardar.pop();
+        datosAuditoria.d = pagosAGuardar;
+        datosAuditoria.trunc = true;
+        jsonStr = JSON.stringify(datosAuditoria);
+      }
+
+      // Caída de seguridad absoluta si 1 solo registro supera limite
+      if (jsonStr.length > 2000) {
+        jsonStr = jsonStr.substring(0, 2000);
+      }
+
       await this.auditoriaRepo.createAuditoria({
         id_usuario: idUsuario,
         modulo: "TESORERIA",
         registro: "REVERSO_PAGO_TESORERIA",
-        descripcion:
-          `Reverso ${tipoReverso} Caja:${numeroCaja} Folio:${folioCaja} RUT:${rut}. ${itemsDesc}.`.substring(
-            0,
-            2000,
-          ),
+        descripcion: jsonStr,
+      });
+    } catch (err) {
+      try {
+        await transaction.rollback();
+      } catch {}
+      throw err;
+    }
+  }
+
+  /**
+   * Deshacer el último reverso realizado por el usuario (Botón de Emergencia)
+   */
+  async deshacerUltimoReverso(idUsuario: string): Promise<void> {
+    // 1. Buscar el último registro de auditoría de este usuario para REVERSO_PAGO_TESORERIA
+    const auditorias = await this.auditoriaRepo.findByUsuario(idUsuario);
+    const ultimoReverso = auditorias.find(
+      (a) => a.registro === "REVERSO_PAGO_TESORERIA",
+    );
+
+    if (!ultimoReverso) {
+      throw new Error("No se encontró ningún reverso reciente para deshacer.");
+    }
+
+    // 2. Extraer y parsear los datos originales
+    let datosAuditoria;
+    try {
+      datosAuditoria = JSON.parse(ultimoReverso.descripcion);
+    } catch (e) {
+      throw new Error(
+        "El formato del registro de auditoría es antiguo o se cortó y no soporta restauración automática.",
+      );
+    }
+
+    // Soporte para formato optimizado 'd' o formato clásico 'datosOriginales'
+    const pagosOriginales = datosAuditoria.d || datosAuditoria.datosOriginales;
+    if (
+      !pagosOriginales ||
+      !Array.isArray(pagosOriginales) ||
+      pagosOriginales.length === 0
+    ) {
+      throw new Error(
+        "No se encontraron los datos originales en el registro de auditoría.",
+      );
+    }
+
+    // 3. Restaurar los pagos
+    const pool = await connectToDB("comun");
+    if (!pool) throw new Error("Error de conexión a BD Comun");
+
+    const transaction = new sql.Transaction(pool);
+    try {
+      await transaction.begin();
+
+      for (const pago of pagosOriginales) {
+        // Soporte de mapeo para propiedades cortas vs largas
+        const NC = pago.NC ?? pago.Numero_Caja;
+        const NI = pago.NI ?? pago.Numero_Ingreso;
+        const FP = pago.FP ?? pago.Fecha_Pago;
+        const OI = pago.OI ?? pago.Orden_Ingreso;
+        const IP = pago.IP ?? pago.Item_Pago;
+        const R = pago.R ?? pago.Rut;
+
+        const result = await new sql.Request(transaction)
+          .input("NumeroCajaOriginal", sql.Int, NC)
+          .input("FolioCajaOriginal", sql.Int, NI)
+          .input("FechaPagoOriginal", sql.DateTime, new Date(FP))
+          .input("OrdenIngreso", sql.Int, OI)
+          .input("ItemPago", sql.VarChar(20), String(IP))
+          .input("RutCont", sql.VarChar(20), formatRutForDb(R)).query(`
+            UPDATE EncabezadoDeudoresMunicipales
+            SET
+              Fecha_Pago = @FechaPagoOriginal,
+              Numero_Caja = @NumeroCajaOriginal,
+              Numero_Ingreso = @FolioCajaOriginal
+            WHERE 
+              Orden_Ingreso = @OrdenIngreso
+              AND Item_Pago = @ItemPago
+              AND Rut = @RutCont
+              AND Fecha_Pago IS NULL; -- Asegurarse de que esté anulado
+          `);
+      }
+
+      await transaction.commit();
+
+      // 4. Registrar la restauración en auditoría
+      await this.auditoriaRepo.createAuditoria({
+        id_usuario: idUsuario,
+        modulo: "TESORERIA",
+        registro: "RESTAURACION_PAGO_EMERGENCIA",
+        descripcion: `Restauración de emergencia ejecutada para el audit ID: ${ultimoReverso.id_auditoria}`,
       });
     } catch (err) {
       try {

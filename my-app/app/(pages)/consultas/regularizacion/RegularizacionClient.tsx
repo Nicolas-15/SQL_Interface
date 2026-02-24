@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   previewPagoTesoreriaAction,
   reversarPagoTesoreriaAction,
+  deshacerUltimoReversoAction,
 } from "@/app/lib/action/tesoreria/tesoreria.action";
 import { toast } from "react-toastify";
 import ConfirmationToast from "@/app/components/ConfirmationToast";
@@ -15,11 +16,13 @@ import {
   IconAlertTriangle,
   IconCheck,
   IconSearchOff,
+  IconLifebuoy,
 } from "@tabler/icons-react";
 import { formatRut, validarRut } from "@/app/lib/utils/validations";
 
 export default function RegularizacionClient() {
   const [loading, setLoading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [confirmedTesoreria, setConfirmedTesoreria] = useState(false);
 
@@ -138,6 +141,31 @@ export default function RegularizacionClient() {
     return selectedItems.some((i) => i.orden === orden && i.item === item);
   };
 
+  const handleDeshacerReverso = () => {
+    toast(({ closeToast }) => (
+      <ConfirmationToast
+        message="¿Estás seguro de deshacer tu último reverso? Esto volverá a registrar el pago en Deudores con los datos exactos que acabas de anular."
+        onConfirm={async () => {
+          setIsRestoring(true);
+          const result = await deshacerUltimoReversoAction();
+          setIsRestoring(false);
+
+          if (result.error) {
+            toast.error(result.error);
+          } else {
+            toast.success(
+              "El reverso se deshizo correctamente. Pago restaurado.",
+            );
+            setPreviewData([]); // Limpiar la tabla o forzar nueva busqueda
+            setConfirmedTesoreria(false);
+            setSelectedItems([]);
+          }
+        }}
+        closeToast={closeToast}
+      />
+    ));
+  };
+
   return (
     <div className="space-y-8">
       {/* Instrucciones del Procedimiento */}
@@ -148,16 +176,16 @@ export default function RegularizacionClient() {
         </h3>
         <p className="mb-4">
           Este módulo apoya la regularización de pagos. Asegúrese de seleccionar
-          solo los registros duplicados/erróneos.
+          solo los registros duplicados/erroneos.
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h4 className="font-semibold mb-1">
-              3.1. Pago No Registrado en Tesorería
+              1. Pago no registrado en Tesorería.
             </h4>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
               <li>El pago está en Deudores pero no en Tesorería.</li>
-              <li>Confirme el reverso completo o parcial.</li>
+              <li>Ejecutar reversa para liberar órdenes (Retorno a deuda).</li>
               <li>
                 <strong>Cajera/o:</strong> Reprocesa el pago con el{" "}
                 <u>mismo folio</u>.
@@ -166,29 +194,48 @@ export default function RegularizacionClient() {
           </div>
           <div>
             <h4 className="font-semibold mb-1">
-              3.2. Pago Registrado Parcialmente
+              2. Pago Registrado Parcialmente
             </h4>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
               <li>
-                <strong>Tesorería:</strong> Elimina pago en su sistema.
+                Pago registrado en Tesorería, pero sin la totalidad de las
+                órdenes ingresadas.
+              </li>
+              <li>
+                <strong>Tesorería:</strong> Elimina .
               </li>
               <li>
                 <strong>Informática:</strong> Reversa registros en Deudores.
               </li>
               <li>
-                <strong>Cajera/o:</strong> Reprocesa el pago.
+                <strong>Cajera/o:</strong> Reprocesa el pago con el{" "}
+                <u>mismo folio</u>.
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Formulario de Búsqueda */}
-      <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-sm font-semibold mb-2 flex items-center gap-2 text-gray-700">
-          <IconSearch className="text-blue-600 w-4 h-4" />
-          Buscar Pago
-        </h2>
+      {/* Formulario de Búsqueda y Botón de Emergencia */}
+      <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative">
+        <div className="flex flex-wrap items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+            <IconSearch className="text-blue-600 w-4 h-4" />
+            Buscar Pago
+          </h2>
+
+          <button
+            type="button"
+            onClick={handleDeshacerReverso}
+            disabled={isRestoring || loading}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+            title="Deshacer el último reverso ejecutado"
+          >
+            <IconLifebuoy className="w-4 h-4" />
+            {isRestoring ? "Restaurando..." : "Botón de Emergencia (Deshacer)"}
+          </button>
+        </div>
+
         <form action={handleSearch} className="space-y-2">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
             <div>
@@ -374,14 +421,17 @@ export default function RegularizacionClient() {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                           {row.Fecha_Emision
-                            ? new Date(row.Fecha_Emision).toLocaleDateString()
+                            ? new Date(row.Fecha_Emision).toLocaleDateString(
+                                "es-CL",
+                                { timeZone: "UTC" },
+                              )
                             : "-"}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-gray-500">
                           {row.Fecha_Vencimiento
                             ? new Date(
                                 row.Fecha_Vencimiento,
-                              ).toLocaleDateString()
+                              ).toLocaleDateString("es-CL", { timeZone: "UTC" })
                             : "-"}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
@@ -407,7 +457,10 @@ export default function RegularizacionClient() {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap font-medium text-green-600">
                           {row.Fecha_Pago
-                            ? new Date(row.Fecha_Pago).toLocaleDateString()
+                            ? new Date(row.Fecha_Pago).toLocaleDateString(
+                                "es-CL",
+                                { timeZone: "UTC" },
+                              )
                             : "-"}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">

@@ -112,7 +112,6 @@ export default function GestionCasClient() {
       const currentSearch = inputValue;
       const result = await getUsuariosDropdownAction(inputValue);
 
-      // Prevent race conditions: Ensure response matches the latest input typed.
       if (currentSearch !== latestSearchRef.current) {
         return;
       }
