@@ -74,7 +74,9 @@ export class RegularizarRepository {
     const pool = await connectToDB("titular");
     if (!pool) return false;
 
-    // Solo elimina el historial como solicitó el usuario
+    // Aplicación estricta del Script 6.3 del proveedor.
+    // El DELETE solo borra si el último estado es 1 (Emisión).
+    // El UPDATE siempre cambia el decreto a 'true' (No Liberado / Estado normal).
     const result = await pool
       .request()
       .input("AnoProceso", sql.Int, anio)
@@ -87,14 +89,19 @@ export class RegularizarRepository {
           AND Ano_Proceso = @AnoProceso
           AND NumeroDecreto = @NumeroDecreto
         ) and Codigo_Estado = 1;
-         UPDATE EncabezadoDecretos
+        
+        UPDATE EncabezadoDecretos
         SET SDF = 'true'
         WHERE (Codigo_Area = 1)
         AND (Ano_Proceso = @AnoProceso)
-        AND (NumeroDecreto = @NumeroDecreto)
+        AND (NumeroDecreto = @NumeroDecreto);
       `);
 
-    return true;
+    return (
+      result.rowsAffected &&
+      result.rowsAffected.length > 0 &&
+      result.rowsAffected[0] > 0
+    );
   }
 
   /*6.4. Historial de estados del decreto.*/

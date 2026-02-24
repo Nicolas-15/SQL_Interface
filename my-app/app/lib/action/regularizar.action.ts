@@ -64,6 +64,9 @@ export async function liberarDecretoAction(anio: number, numero: number) {
 export async function regularizarDecretoAction(anio: number, numero: number) {
   try {
     const session = await protectAction("/consultas/regularizar-folio");
+
+    // El repositorio intentará borrar el historial si es el estado 1,
+    // y SIEMPRE hará el UPDATE para volver el decreto a estado normal ('true').
     await service.regularizarDecreto(anio, numero);
 
     const decretos = await service.buscarDecretos(anio, numero);
