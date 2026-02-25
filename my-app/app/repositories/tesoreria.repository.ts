@@ -214,33 +214,127 @@ export class TesoreriaRepository {
   }
 
   /**
-   * Obtiene los items del último reverso realizado por el usuario para mostrarlos en la UI.
+   * Obtiene los items de todos los reversos realizados por el usuario en el día actual.
    */
   async getUltimoReverso(idUsuario: string): Promise<any[] | null> {
     const auditorias = await this.auditoriaRepo.findByUsuario(idUsuario);
-    const ultimoReverso = auditorias.find(
-      (a) => a.registro === "REVERSO_PAGO_TESORERIA",
-    );
 
-    if (!ultimoReverso) return null;
+    const checkDate = new Date();
+    // Ajustar zona horaria si fuera necesario, usando la fecha local
+    const hoyStr =
+      checkDate.getFullYear() +
+      "-" +
+      String(checkDate.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(checkDate.getDate()).padStart(2, "0");
 
-    let datosAuditoria;
-    try {
-      datosAuditoria = JSON.parse(ultimoReverso.descripcion);
-    } catch (e) {
-      return null;
+    const reversosHoy = auditorias.filter((a) => {
+      if (a.registro !== "REVERSO_PAGO_TESORERIA") return false;
+      const d = new Date(a.fecha_cambio);
+      const aStr =
+        d.getUTCFullYear() +
+        "-" +
+        String(d.getUTCMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getUTCDate()).padStart(2, "0");
+      const localStr =
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0");
+      return localStr === hoyStr || aStr === hoyStr;
+    });
+
+    if (reversosHoy.length === 0) return null;
+
+    let todosLosPagos: any[] = [];
+
+    for (const rev of reversosHoy) {
+      try {
+        const datosAuditoria = JSON.parse(rev.descripcion);
+        const pagosOriginales =
+          datosAuditoria.d || datosAuditoria.datosOriginales;
+        if (
+          pagosOriginales &&
+          Array.isArray(pagosOriginales) &&
+          pagosOriginales.length > 0
+        ) {
+          const horaRev = new Date(rev.fecha_cambio).toLocaleTimeString(
+            "es-CL",
+            {
+              timeZone: "America/Santiago",
+              hour: "2-digit",
+              minute: "2-digit",
+            },
+          );
+          todosLosPagos.push(
+            ...pagosOriginales.map((p) => ({ ...p, HoraReverso: horaRev })),
+          );
+        }
+      } catch (e) {
+        continue;
+      }
     }
 
-    const pagosOriginales = datosAuditoria.d || datosAuditoria.datosOriginales;
-    if (
-      !pagosOriginales ||
-      !Array.isArray(pagosOriginales) ||
-      pagosOriginales.length === 0
-    ) {
-      return null;
+    if (todosLosPagos.length === 0) return null;
+
+    // Filter by checking DB if they are actually reversed (Fecha_Pago IS NULL)
+    const pool = await connectToDB("comun");
+    if (pool) {
+      try {
+        let validPagos: any[] = [];
+        // Chunk sizes of 500 items max (each takes 2 config params; max is 2100)
+        const chunkSize = 500;
+        for (let i = 0; i < todosLosPagos.length; i += chunkSize) {
+          const chunk = todosLosPagos.slice(i, i + chunkSize);
+          const request = pool.request();
+
+          let conditions: string[] = [];
+          for (let j = 0; j < chunk.length; j++) {
+            const p = chunk[j];
+            conditions.push(
+              `(Orden_Ingreso = @oi${i}_${j} AND Item_Pago = @ip${i}_${j})`,
+            );
+            request.input(`oi${i}_${j}`, sql.Int, p.OI ?? p.Orden_Ingreso);
+            request.input(
+              `ip${i}_${j}`,
+              sql.VarChar(20),
+              String(p.IP ?? p.Item_Pago),
+            );
+          }
+
+          const query = `
+            SELECT Orden_Ingreso, Item_Pago
+            FROM EncabezadoDeudoresMunicipales
+            WHERE Fecha_Pago IS NULL
+            AND (${conditions.join(" OR ")})
+          `;
+
+          const result = await request.query(query);
+          const reversedMap = new Set(
+            result.recordset.map(
+              (r) => `${r.Orden_Ingreso}-${String(r.Item_Pago).trim()}`,
+            ),
+          );
+
+          for (const p of chunk) {
+            const OI = p.OI ?? p.Orden_Ingreso;
+            const IP = String(p.IP ?? p.Item_Pago).trim();
+            if (reversedMap.has(`${OI}-${IP}`)) {
+              validPagos.push(p);
+            }
+          }
+        }
+        todosLosPagos = validPagos;
+      } catch (e) {
+        console.error("Error validando items reversados en DB:", e);
+      }
     }
 
-    return pagosOriginales;
+    if (todosLosPagos.length === 0) return null;
+
+    return todosLosPagos;
   }
 
   /**
@@ -248,37 +342,59 @@ export class TesoreriaRepository {
    */
   async deshacerUltimoReverso(
     idUsuario: string,
-    itemsToRestore?: { OI: number; IP: string }[],
+    itemsToRestore?: { OI: number; IP: string; NC: number; NI: number }[],
   ): Promise<void> {
-    // 1. Buscar el último registro de auditoría de este usuario para REVERSO_PAGO_TESORERIA
+    // 1. Buscar registros de auditoría de este usuario para REVERSO_PAGO_TESORERIA del día actual
     const auditorias = await this.auditoriaRepo.findByUsuario(idUsuario);
-    const ultimoReverso = auditorias.find(
-      (a) => a.registro === "REVERSO_PAGO_TESORERIA",
-    );
+    const checkDate = new Date();
+    const hoyStr =
+      checkDate.getFullYear() +
+      "-" +
+      String(checkDate.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(checkDate.getDate()).padStart(2, "0");
 
-    if (!ultimoReverso) {
-      throw new Error("No se encontró ningún reverso reciente para deshacer.");
-    }
+    const reversosHoy = auditorias.filter((a) => {
+      if (a.registro !== "REVERSO_PAGO_TESORERIA") return false;
+      const d = new Date(a.fecha_cambio);
+      const aStr =
+        d.getUTCFullYear() +
+        "-" +
+        String(d.getUTCMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getUTCDate()).padStart(2, "0");
+      const localStr =
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0");
+      return localStr === hoyStr || aStr === hoyStr;
+    });
 
-    // 2. Extraer y parsear los datos originales
-    let datosAuditoria;
-    try {
-      datosAuditoria = JSON.parse(ultimoReverso.descripcion);
-    } catch (e) {
+    if (reversosHoy.length === 0) {
       throw new Error(
-        "El formato del registro de auditoría es antiguo o se cortó y no soporta restauración automática.",
+        "No se encontraron reversos durante este día para deshacer.",
       );
     }
 
-    // Soporte para formato optimizado 'd' o formato clásico 'datosOriginales'
-    const pagosOriginales = datosAuditoria.d || datosAuditoria.datosOriginales;
-    if (
-      !pagosOriginales ||
-      !Array.isArray(pagosOriginales) ||
-      pagosOriginales.length === 0
-    ) {
+    // 2. Extraer y parsear los datos originales de todos los reversos del día
+    let pagosOriginales: any[] = [];
+    for (const rev of reversosHoy) {
+      try {
+        const datosAuditoria = JSON.parse(rev.descripcion);
+        const pagos = datosAuditoria.d || datosAuditoria.datosOriginales;
+        if (pagos && Array.isArray(pagos) && pagos.length > 0) {
+          pagosOriginales.push(...pagos);
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (pagosOriginales.length === 0) {
       throw new Error(
-        "No se encontraron los datos originales en el registro de auditoría.",
+        "No se encontraron los datos originales en los registros de auditoría.",
       );
     }
 
@@ -301,7 +417,7 @@ export class TesoreriaRepository {
 
         if (itemsToRestore && itemsToRestore.length > 0) {
           const isSelected = itemsToRestore.some(
-            (i) => i.OI === OI && i.IP === IP,
+            (i) => i.OI === OI && i.IP === IP && i.NC === NC && i.NI === NI,
           );
           if (!isSelected) continue;
         }
@@ -333,7 +449,7 @@ export class TesoreriaRepository {
         id_usuario: idUsuario,
         modulo: "TESORERIA",
         registro: "RESTAURACION_PAGO_EMERGENCIA",
-        descripcion: `Restauración de emergencia ejecutada para el audit ID: ${ultimoReverso.id_auditoria}`,
+        descripcion: `Restauración de emergencia ejecutada para ${itemsToRestore ? itemsToRestore.length : "varios"} items.`,
       });
     } catch (err) {
       try {

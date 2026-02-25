@@ -75,7 +75,9 @@ export async function obtenerUltimoReversoAction() {
     const session = await protectAction("/consultas/regularizacion");
     const reversoItems = await repo.getUltimoReverso(session.id);
     if (!reversoItems) {
-      return { error: "No se encontró ningún reverso reciente para deshacer." };
+      return {
+        error: "No se encontró ningún reverso disponible para deshacer.",
+      };
     }
     return { success: true, data: reversoItems };
   } catch (error: any) {

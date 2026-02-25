@@ -18,6 +18,8 @@ import {
   IconCheck,
   IconSearchOff,
   IconLifebuoy,
+  IconArrowNarrowLeft,
+  IconArrowNarrowRight,
 } from "@tabler/icons-react";
 import { formatRut, validarRut } from "@/app/lib/utils/validations";
 
@@ -145,16 +147,59 @@ export default function RegularizacionClient() {
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [emergencyItems, setEmergencyItems] = useState<any[]>([]);
   const [selectedEmergencyItems, setSelectedEmergencyItems] = useState<
-    { OI: number; IP: string }[]
+    { OI: number; IP: string; NC: number; NI: number }[]
   >([]);
+
+  // Paginación modal emergencia
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  // Filtros modal emergencia
+  const [emergencySearchText, setEmergencySearchText] = useState("");
+  const [emergencySearchDate, setEmergencySearchDate] = useState("");
+
+  const filteredEmergencyItems = emergencyItems.filter((item) => {
+    const searchTextLower = emergencySearchText.toLowerCase();
+    const textMatch =
+      !emergencySearchText ||
+      String(item.OI ?? item.Orden_Ingreso)
+        .toLowerCase()
+        .includes(searchTextLower) ||
+      String(item.IP ?? item.Item_Pago)
+        .toLowerCase()
+        .includes(searchTextLower) ||
+      String(item.NC ?? item.Numero_Caja)
+        .toLowerCase()
+        .includes(searchTextLower) ||
+      String(item.NI ?? item.Numero_Ingreso)
+        .toLowerCase()
+        .includes(searchTextLower) ||
+      String(item.R ?? item.Rut)
+        .toLowerCase()
+        .includes(searchTextLower);
+
+    // Si FP (Fecha_Pago / Fecha Transacción) coincide o la fecha original de la auditoria de reversa coincide
+    const itemDate = item.FP
+      ? new Date(item.FP).toISOString().split("T")[0]
+      : "";
+    const dateMatch =
+      !emergencySearchDate ||
+      itemDate === emergencySearchDate ||
+      item.HoraReverso?.includes(emergencySearchDate);
+
+    return textMatch && dateMatch;
+  });
 
   const handleOpenEmergency = async () => {
     setIsRestoring(true);
     const result = await obtenerUltimoReversoAction();
     setIsRestoring(false);
 
-    if (result.error || !result.data) {
-      toast.error(result.error || "No hay un reverso reciente para deshacer.");
+    if (result.error || !result.data || result.data.length === 0) {
+      toast.error(
+        result.error ||
+          "No se encontraron reversos durante este día para deshacer.",
+      );
       return;
     }
 
@@ -163,40 +208,83 @@ export default function RegularizacionClient() {
       result.data.map((d: any) => ({
         OI: d.OI ?? d.Orden_Ingreso,
         IP: d.IP ?? d.Item_Pago,
+        NC: d.NC ?? d.Numero_Caja,
+        NI: d.NI ?? d.Numero_Ingreso,
       })),
     );
+    setCurrentPage(1);
+    setEmergencySearchText("");
+    setEmergencySearchDate("");
     setShowEmergencyModal(true);
   };
 
   const toggleSelectEmergencyAll = (checked: boolean) => {
     if (checked) {
-      setSelectedEmergencyItems(
-        emergencyItems.map((d: any) => ({
-          OI: d.OI ?? d.Orden_Ingreso,
-          IP: d.IP ?? d.Item_Pago,
-        })),
+      const paginatedItems = filteredEmergencyItems.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
       );
+      const newGrip = paginatedItems.map((d: any) => ({
+        OI: d.OI ?? d.Orden_Ingreso,
+        IP: d.IP ?? d.Item_Pago,
+        NC: d.NC ?? d.Numero_Caja,
+        NI: d.NI ?? d.Numero_Ingreso,
+      }));
+      const existingFilter = selectedEmergencyItems.filter(
+        (s) =>
+          !newGrip.some(
+            (n) =>
+              n.OI === s.OI && n.IP === s.IP && n.NC === s.NC && n.NI === s.NI,
+          ),
+      );
+      setSelectedEmergencyItems([...existingFilter, ...newGrip]);
     } else {
-      setSelectedEmergencyItems([]);
+      const paginatedItems = filteredEmergencyItems.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+      );
+      setSelectedEmergencyItems((prev) =>
+        prev.filter(
+          (s) =>
+            !paginatedItems.some(
+              (c) =>
+                (c.OI ?? c.Orden_Ingreso) === s.OI &&
+                (c.IP ?? c.Item_Pago) === s.IP &&
+                (c.NC ?? c.Numero_Caja) === s.NC &&
+                (c.NI ?? c.Numero_Ingreso) === s.NI,
+            ),
+        ),
+      );
     }
   };
 
   const toggleSelectEmergencyItem = (
     OI: number,
     IP: string,
+    NC: number,
+    NI: number,
     checked: boolean,
   ) => {
     if (checked) {
-      setSelectedEmergencyItems((prev) => [...prev, { OI, IP }]);
+      setSelectedEmergencyItems((prev) => [...prev, { OI, IP, NC, NI }]);
     } else {
       setSelectedEmergencyItems((prev) =>
-        prev.filter((i) => !(i.OI === OI && i.IP === IP)),
+        prev.filter(
+          (i) => !(i.OI === OI && i.IP === IP && i.NC === NC && i.NI === NI),
+        ),
       );
     }
   };
 
-  const isEmergencySelected = (OI: number, IP: string) => {
-    return selectedEmergencyItems.some((i) => i.OI === OI && i.IP === IP);
+  const isEmergencySelected = (
+    OI: number,
+    IP: string,
+    NC: number,
+    NI: number,
+  ) => {
+    return selectedEmergencyItems.some(
+      (i) => i.OI === OI && i.IP === IP && i.NC === NC && i.NI === NI,
+    );
   };
 
   const handleConfirmEmergency = async () => {
@@ -686,12 +774,46 @@ export default function RegularizacionClient() {
             </div>
 
             <div className="p-4 overflow-y-auto">
-              <p className="text-sm text-gray-600 mb-4">
-                Selecciona los registros que deseas restaurar (volverán a
-                figurar como pagados en Deudores).
-              </p>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Selecciona los registros que deseas restaurar (volverán a
+                  figurar como pagados en Deudores con sus datos originales).
+                </p>
 
-              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-3 rounded border border-gray-200">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Buscar (Folio, Caja, Orden, Item, RUT)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border rounded px-2 py-1.5 text-sm focus:ring-1 outline-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Ej: 1100272"
+                      value={emergencySearchText}
+                      onChange={(e) => {
+                        setEmergencySearchText(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Filtrar por Fecha Transacción Original
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full border rounded px-2 py-1.5 text-sm focus:ring-1 outline-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      value={emergencySearchDate}
+                      onChange={(e) => {
+                        setEmergencySearchDate(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="min-h-[380px] overflow-x-auto border border-gray-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-100">
                     <tr>
@@ -703,10 +825,28 @@ export default function RegularizacionClient() {
                             toggleSelectEmergencyAll(e.target.checked)
                           }
                           checked={
-                            selectedEmergencyItems.length ===
-                              emergencyItems.length && emergencyItems.length > 0
+                            filteredEmergencyItems.slice(
+                              (currentPage - 1) * itemsPerPage,
+                              currentPage * itemsPerPage,
+                            ).length > 0 &&
+                            filteredEmergencyItems
+                              .slice(
+                                (currentPage - 1) * itemsPerPage,
+                                currentPage * itemsPerPage,
+                              )
+                              .every((d: any) =>
+                                isEmergencySelected(
+                                  d.OI ?? d.Orden_Ingreso,
+                                  d.IP ?? d.Item_Pago,
+                                  d.NC ?? d.Numero_Caja,
+                                  d.NI ?? d.Numero_Ingreso,
+                                ),
+                              )
                           }
                         />
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Hora Reverso
                       </th>
                       <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                         Orden Ingreso
@@ -721,54 +861,155 @@ export default function RegularizacionClient() {
                         Folio
                       </th>
                       <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Fecha Trans. Original
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                         RUT
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {emergencyItems.map((row) => {
-                      const OI = row.OI ?? row.Orden_Ingreso;
-                      const IP = row.IP ?? row.Item_Pago;
-                      const selected = isEmergencySelected(OI, IP);
+                    {filteredEmergencyItems
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((row, index) => {
+                        const OI = row.OI ?? row.Orden_Ingreso;
+                        const IP = row.IP ?? row.Item_Pago;
+                        const NC = row.NC ?? row.Numero_Caja;
+                        const NI = row.NI ?? row.Numero_Ingreso;
+                        const R = row.R ?? row.Rut;
+                        const FP = row.FP ?? row.Fecha_Pago;
+                        const selected = isEmergencySelected(OI, IP, NC, NI);
+                        // Make key actually unique using the data plus an index fallback if duplicate items exist
+                        const uniqueKey = `em-${index}-${OI}-${IP}-${NC}-${NI}`;
 
-                      return (
-                        <tr
-                          key={`${OI}-${IP}`}
-                          className={
-                            selected ? "bg-red-50/50" : "hover:bg-gray-50"
-                          }
-                        >
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              className="rounded border-gray-400 text-red-600 focus:ring-red-500 w-4 h-4"
-                              checked={selected}
-                              onChange={(e) =>
-                                toggleSelectEmergencyItem(
-                                  OI,
-                                  IP,
-                                  e.target.checked,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">{OI}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">{IP}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            {row.NC ?? row.Numero_Caja}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            {row.NI ?? row.Numero_Ingreso}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            {row.R ?? row.Rut}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        return (
+                          <tr
+                            key={uniqueKey}
+                            className={
+                              selected ? "bg-red-50/50" : "hover:bg-gray-50"
+                            }
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-400 text-red-600 focus:ring-red-500 w-4 h-4"
+                                checked={selected}
+                                onChange={(e) =>
+                                  toggleSelectEmergencyItem(
+                                    OI,
+                                    IP,
+                                    NC,
+                                    NI,
+                                    e.target.checked,
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-gray-500 font-medium">
+                              {row.HoraReverso || "-"}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {OI}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {IP}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {NC}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {NI}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {FP
+                                ? new Date(FP).toLocaleDateString("es-CL", {
+                                    timeZone: "UTC",
+                                  })
+                                : "-"}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">{R}</td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
+
+              {/* Paginación */}
+              {filteredEmergencyItems.length > itemsPerPage && (
+                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-2 rounded-lg border shadow-sm">
+                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Mostrando{" "}
+                        <span className="font-medium">
+                          {(currentPage - 1) * itemsPerPage + 1}
+                        </span>{" "}
+                        a{" "}
+                        <span className="font-medium">
+                          {Math.min(
+                            currentPage * itemsPerPage,
+                            filteredEmergencyItems.length,
+                          )}
+                        </span>{" "}
+                        de{" "}
+                        <span className="font-medium">
+                          {filteredEmergencyItems.length}
+                        </span>{" "}
+                        resultados
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-600 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        >
+                          <span className="sr-only">Anterior</span>
+                          <IconArrowNarrowLeft
+                            className="h-7 w-7"
+                            aria-hidden="true"
+                          />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(
+                                prev + 1,
+                                Math.ceil(
+                                  filteredEmergencyItems.length / itemsPerPage,
+                                ),
+                              ),
+                            )
+                          }
+                          disabled={
+                            currentPage ===
+                            Math.ceil(
+                              filteredEmergencyItems.length / itemsPerPage,
+                            )
+                          }
+                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-600 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        >
+                          <span className="sr-only">Siguiente</span>
+                          <IconArrowNarrowRight
+                            className="h-7 w-7"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-xl">

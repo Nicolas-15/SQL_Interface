@@ -4,7 +4,7 @@ import RegularizacionClient from "./RegularizacionClient";
 export default async function RegularizacionPage() {
   await protectPage("/consultas/regularizacion");
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="mx-auto py-6 space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
           Regularización de Pagos
