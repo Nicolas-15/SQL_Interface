@@ -70,11 +70,30 @@ export async function reversarPagoTesoreriaAction(formData: FormData) {
   }
 }
 
-export async function deshacerUltimoReversoAction() {
+export async function obtenerUltimoReversoAction() {
+  try {
+    const session = await protectAction("/consultas/regularizacion");
+    const reversoItems = await repo.getUltimoReverso(session.id);
+    if (!reversoItems) {
+      return { error: "No se encontró ningún reverso reciente para deshacer." };
+    }
+    return { success: true, data: reversoItems };
+  } catch (error: any) {
+    console.error("Error obteniendo último reverso:", error);
+    return { error: error.message || "Error obteniendo el último reverso." };
+  }
+}
+
+export async function deshacerUltimoReversoAction(itemsToRestoreStr?: string) {
   try {
     const session = await protectAction("/consultas/regularizacion");
 
-    await repo.deshacerUltimoReverso(session.id);
+    let items = undefined;
+    if (itemsToRestoreStr) {
+      items = JSON.parse(itemsToRestoreStr);
+    }
+
+    await repo.deshacerUltimoReverso(session.id, items);
 
     revalidatePath("/consultas/regularizacion");
     return { success: true, message: "Restauración de emergencia exitosa." };

@@ -64,7 +64,7 @@ export class TesoreriaRepository {
           Rol
         FROM EncabezadoDeudoresMunicipales
         WHERE Numero_Caja = @NumeroCaja
-          AND Numero_Ingreso = @FolioCaja
+          AND (Numero_Ingreso = @FolioCaja OR Orden_Ingreso = @FolioCaja)
           AND Rut = @RutCont
           AND CAST(Fecha_Pago AS DATE) = @FechaAct;
       `);
@@ -214,9 +214,42 @@ export class TesoreriaRepository {
   }
 
   /**
+   * Obtiene los items del último reverso realizado por el usuario para mostrarlos en la UI.
+   */
+  async getUltimoReverso(idUsuario: string): Promise<any[] | null> {
+    const auditorias = await this.auditoriaRepo.findByUsuario(idUsuario);
+    const ultimoReverso = auditorias.find(
+      (a) => a.registro === "REVERSO_PAGO_TESORERIA",
+    );
+
+    if (!ultimoReverso) return null;
+
+    let datosAuditoria;
+    try {
+      datosAuditoria = JSON.parse(ultimoReverso.descripcion);
+    } catch (e) {
+      return null;
+    }
+
+    const pagosOriginales = datosAuditoria.d || datosAuditoria.datosOriginales;
+    if (
+      !pagosOriginales ||
+      !Array.isArray(pagosOriginales) ||
+      pagosOriginales.length === 0
+    ) {
+      return null;
+    }
+
+    return pagosOriginales;
+  }
+
+  /**
    * Deshacer el último reverso realizado por el usuario (Botón de Emergencia)
    */
-  async deshacerUltimoReverso(idUsuario: string): Promise<void> {
+  async deshacerUltimoReverso(
+    idUsuario: string,
+    itemsToRestore?: { OI: number; IP: string }[],
+  ): Promise<void> {
     // 1. Buscar el último registro de auditoría de este usuario para REVERSO_PAGO_TESORERIA
     const auditorias = await this.auditoriaRepo.findByUsuario(idUsuario);
     const ultimoReverso = auditorias.find(
@@ -265,6 +298,13 @@ export class TesoreriaRepository {
         const OI = pago.OI ?? pago.Orden_Ingreso;
         const IP = pago.IP ?? pago.Item_Pago;
         const R = pago.R ?? pago.Rut;
+
+        if (itemsToRestore && itemsToRestore.length > 0) {
+          const isSelected = itemsToRestore.some(
+            (i) => i.OI === OI && i.IP === IP,
+          );
+          if (!isSelected) continue;
+        }
 
         const result = await new sql.Request(transaction)
           .input("NumeroCajaOriginal", sql.Int, NC)

@@ -5,6 +5,7 @@ import {
   previewPagoTesoreriaAction,
   reversarPagoTesoreriaAction,
   deshacerUltimoReversoAction,
+  obtenerUltimoReversoAction,
 } from "@/app/lib/action/tesoreria/tesoreria.action";
 import { toast } from "react-toastify";
 import ConfirmationToast from "@/app/components/ConfirmationToast";
@@ -141,22 +142,87 @@ export default function RegularizacionClient() {
     return selectedItems.some((i) => i.orden === orden && i.item === item);
   };
 
-  const handleDeshacerReverso = () => {
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [emergencyItems, setEmergencyItems] = useState<any[]>([]);
+  const [selectedEmergencyItems, setSelectedEmergencyItems] = useState<
+    { OI: number; IP: string }[]
+  >([]);
+
+  const handleOpenEmergency = async () => {
+    setIsRestoring(true);
+    const result = await obtenerUltimoReversoAction();
+    setIsRestoring(false);
+
+    if (result.error || !result.data) {
+      toast.error(result.error || "No hay un reverso reciente para deshacer.");
+      return;
+    }
+
+    setEmergencyItems(result.data);
+    setSelectedEmergencyItems(
+      result.data.map((d: any) => ({
+        OI: d.OI ?? d.Orden_Ingreso,
+        IP: d.IP ?? d.Item_Pago,
+      })),
+    );
+    setShowEmergencyModal(true);
+  };
+
+  const toggleSelectEmergencyAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedEmergencyItems(
+        emergencyItems.map((d: any) => ({
+          OI: d.OI ?? d.Orden_Ingreso,
+          IP: d.IP ?? d.Item_Pago,
+        })),
+      );
+    } else {
+      setSelectedEmergencyItems([]);
+    }
+  };
+
+  const toggleSelectEmergencyItem = (
+    OI: number,
+    IP: string,
+    checked: boolean,
+  ) => {
+    if (checked) {
+      setSelectedEmergencyItems((prev) => [...prev, { OI, IP }]);
+    } else {
+      setSelectedEmergencyItems((prev) =>
+        prev.filter((i) => !(i.OI === OI && i.IP === IP)),
+      );
+    }
+  };
+
+  const isEmergencySelected = (OI: number, IP: string) => {
+    return selectedEmergencyItems.some((i) => i.OI === OI && i.IP === IP);
+  };
+
+  const handleConfirmEmergency = async () => {
+    if (selectedEmergencyItems.length === 0) {
+      toast.warning("Debe seleccionar al menos un registro para restaurar.");
+      return;
+    }
+
     toast(({ closeToast }) => (
       <ConfirmationToast
-        message="¿Estás seguro de deshacer tu último reverso? Esto volverá a registrar el pago en Deudores con los datos exactos que acabas de anular."
+        message={`¿Estás seguro de deshacer el reverso de estos ${selectedEmergencyItems.length} registros? Esto volverá a registrar el pago en Deudores con los datos exactos que habías anulado.`}
         onConfirm={async () => {
           setIsRestoring(true);
-          const result = await deshacerUltimoReversoAction();
+          const result = await deshacerUltimoReversoAction(
+            JSON.stringify(selectedEmergencyItems),
+          );
           setIsRestoring(false);
 
           if (result.error) {
             toast.error(result.error);
           } else {
             toast.success(
-              "El reverso se deshizo correctamente. Pago restaurado.",
+              "El reverso se deshizo correctamente. Pago(s) restaurado(s).",
             );
-            setPreviewData([]); // Limpiar la tabla o forzar nueva busqueda
+            setShowEmergencyModal(false);
+            setPreviewData([]); // Limpiar la tabla
             setConfirmedTesoreria(false);
             setSelectedItems([]);
           }
@@ -226,13 +292,13 @@ export default function RegularizacionClient() {
 
           <button
             type="button"
-            onClick={handleDeshacerReverso}
+            onClick={handleOpenEmergency}
             disabled={isRestoring || loading}
             className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
             title="Deshacer el último reverso ejecutado"
           >
             <IconLifebuoy className="w-4 h-4" />
-            {isRestoring ? "Restaurando..." : "Botón de Emergencia (Deshacer)"}
+            {isRestoring ? "Cargando..." : "Botón de Emergencia (Deshacer)"}
           </button>
         </div>
 
@@ -253,7 +319,7 @@ export default function RegularizacionClient() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-0.5">
-                Folio de Caja
+                Folio de Caja u Orden Ingreso
               </label>
               <input
                 name="folio"
@@ -600,6 +666,129 @@ export default function RegularizacionClient() {
             </p>
           </div>
         )
+      )}
+
+      {/* Modal Botón de Emergencia */}
+      {showEmergencyModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-4xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-red-50 rounded-t-xl">
+              <h2 className="text-lg font-bold text-red-700 flex items-center gap-2">
+                <IconLifebuoy className="w-5 h-5" />
+                Deshacer Reverso (Botón de Emergencia)
+              </h2>
+              <button
+                onClick={() => setShowEmergencyModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto">
+              <p className="text-sm text-gray-600 mb-4">
+                Selecciona los registros que deseas restaurar (volverán a
+                figurar como pagados en Deudores).
+              </p>
+
+              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-400 text-red-600 focus:ring-red-500 w-4 h-4"
+                          onChange={(e) =>
+                            toggleSelectEmergencyAll(e.target.checked)
+                          }
+                          checked={
+                            selectedEmergencyItems.length ===
+                              emergencyItems.length && emergencyItems.length > 0
+                          }
+                        />
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Orden Ingreso
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Item Pago
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Caja
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        Folio
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                        RUT
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {emergencyItems.map((row) => {
+                      const OI = row.OI ?? row.Orden_Ingreso;
+                      const IP = row.IP ?? row.Item_Pago;
+                      const selected = isEmergencySelected(OI, IP);
+
+                      return (
+                        <tr
+                          key={`${OI}-${IP}`}
+                          className={
+                            selected ? "bg-red-50/50" : "hover:bg-gray-50"
+                          }
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-400 text-red-600 focus:ring-red-500 w-4 h-4"
+                              checked={selected}
+                              onChange={(e) =>
+                                toggleSelectEmergencyItem(
+                                  OI,
+                                  IP,
+                                  e.target.checked,
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">{OI}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{IP}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {row.NC ?? row.Numero_Caja}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {row.NI ?? row.Numero_Ingreso}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {row.R ?? row.Rut}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+              <button
+                onClick={() => setShowEmergencyModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmEmergency}
+                disabled={selectedEmergencyItems.length === 0}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <IconRotateClockwise className="w-4 h-4" />
+                Restaurar Seleccionados ({selectedEmergencyItems.length})
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
