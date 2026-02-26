@@ -98,7 +98,7 @@ export default function AuditoriaClient({ initialAudits }: Props) {
 
     return (
       <span
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[modulo] || styles.GENERAL}`}
+        className={`w-fit flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${styles[modulo] || styles.GENERAL}`}
       >
         <Icon className="w-3.5 h-3.5" />
         {modulo}

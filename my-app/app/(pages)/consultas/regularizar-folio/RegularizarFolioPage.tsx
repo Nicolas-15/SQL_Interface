@@ -225,7 +225,7 @@ export default function RegularizarFolioPage() {
   };
 
   return (
-    <div className="mx-auto py-10 w-[95%]">
+    <div className="mx-auto py-10">
       {/* HEADER ESTILIZADO */}
       <div className="text-center mb-10">
         <div className="mx-auto h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">

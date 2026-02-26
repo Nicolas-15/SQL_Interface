@@ -169,7 +169,7 @@ export class UsuarioRepository {
 
       // Crear nuevo usuario copiando estructura
       await new sql.Request(transaction)
-        .input("UsuarioNuevo", sql.VarChar(10), nuevoUsuario.cuenta)
+        .input("UsuarioNuevo", sql.VarChar(6), nuevoUsuario.cuenta)
         .input("NombreNuevo", sql.VarChar(100), nuevoUsuario.nombre)
         .input("UsuarioBase", sql.VarChar(10), nuevoUsuario.base)
         .input("CodigoSistema", sql.Int, sistema).query(`
@@ -204,8 +204,8 @@ export class UsuarioRepository {
 
       // Copiar permisos del usuario base
       await new sql.Request(transaction)
-        .input("UsuarioBase", sql.VarChar(10), nuevoUsuario.base)
-        .input("UsuarioNuevo", sql.VarChar(10), nuevoUsuario.cuenta)
+        .input("UsuarioBase", sql.VarChar(6), nuevoUsuario.base)
+        .input("UsuarioNuevo", sql.VarChar(6), nuevoUsuario.cuenta)
         .input("CodigoSistema", sql.Int, sistema).query(`
           INSERT INTO Permisos
           (

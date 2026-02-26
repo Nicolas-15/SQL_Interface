@@ -113,14 +113,28 @@ export async function crearUsuarioAction(formData: FormData) {
         continue;
       }
 
-      if (cuenta.length > 10) {
-        errores.push(`Usuario ${cuenta}: Excede límite de 10 caracteres.`);
+      if (cuenta.length > 6) {
+        errores.push(`Usuario ${cuenta}: Excede límite de 6 caracteres.`);
+        continue;
+      }
+
+      if (!/^[A-Z0-9]+$/.test(cuenta)) {
+        errores.push(
+          `Usuario ${cuenta}: Solo se permiten letras y números (sin espacios o especiales).`,
+        );
         continue;
       }
 
       if (nombre.length > 60) {
         errores.push(
           `Usuario ${cuenta}: Nombre excede límite de 60 caracteres.`,
+        );
+        continue;
+      }
+
+      if (!/^[a-zA-Z0-9\s]+$/.test(nombre)) {
+        errores.push(
+          `Usuario ${cuenta}: El nombre solo permite letras, números y espacios.`,
         );
         continue;
       }
@@ -134,14 +148,14 @@ export async function crearUsuarioAction(formData: FormData) {
 
       try {
         await repo.crearUsuario(
-          { cuenta: cuenta.toUpperCase(), nombre: nombre.toUpperCase(), base },
+          { cuenta: cuenta, nombre: nombre, base },
           sistema,
           session.id,
         );
         creados++;
         creadosList.push({
-          cuenta: cuenta.toUpperCase(),
-          nombre: nombre.toUpperCase(),
+          cuenta: cuenta,
+          nombre: nombre,
         });
       } catch (e: any) {
         errores.push(`Usuario ${cuenta}: Error de BD (${e.message}).`);

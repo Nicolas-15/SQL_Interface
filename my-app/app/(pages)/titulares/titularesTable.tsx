@@ -75,7 +75,7 @@ export default function TitularesTable({ titulares }: Props) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-6 sm:py-8">
+    <div className="mx-auto py-6 sm:py-8">
       {/* Tabla */}
       <div className="overflow-x-auto bg-white rounded-xl shadow-md py-2">
         <table className="w-full text-sm text-left">

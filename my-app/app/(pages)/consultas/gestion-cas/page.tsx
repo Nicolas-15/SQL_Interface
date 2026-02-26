@@ -6,7 +6,7 @@ export default async function GestionCasPage() {
   await protectPage("/consultas/gestion-cas");
 
   return (
-    <div className="p-6 md:p-10 space-y-8 max-w-7xl mx-auto">
+    <div className="py-6 md:py-10 space-y-8 mx-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
@@ -17,7 +17,7 @@ export default async function GestionCasPage() {
 
       <Suspense
         fallback={
-          <div className="p-10 text-center text-gray-500">
+          <div className="py-10 md:py-10 text-center text-gray-500">
             Cargando módulo...
           </div>
         }

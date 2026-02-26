@@ -352,7 +352,7 @@ export default function GestionCasClient() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Tabs */}
         <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-xl">
@@ -394,9 +394,9 @@ export default function GestionCasClient() {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 min-h-[600px] flex justify-center">
           {activeTab === "replicar" && (
-            <div className="animate-fade-in space-y-8 max-w-6xl mx-auto">
+            <div className="animate-fade-in space-y-8 w-full max-w-5xl mx-auto flex flex-col h-full pt-[60px]">
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-900 flex gap-3">
                 <IconAlertTriangle className="w-5 h-5 shrink-0" />
                 <div>
@@ -409,7 +409,10 @@ export default function GestionCasClient() {
                 </div>
               </div>
 
-              <form action={handleReplicar} className="space-y-8">
+              <form
+                action={handleReplicar}
+                className="space-y-8 flex-1 flex flex-col"
+              >
                 <input type="hidden" name="sistema" value="2" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -489,7 +492,7 @@ export default function GestionCasClient() {
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-gray-100">
+                <div className="flex justify-end pt-4 border-t border-gray-100 mt-auto">
                   <button
                     type="submit"
                     disabled={processing || !selectedOrigen || !selectedDestino}
@@ -513,7 +516,7 @@ export default function GestionCasClient() {
           )}
 
           {activeTab === "crear" && (
-            <div className="animate-fade-in space-y-8 max-w-5xl mx-auto">
+            <div className="animate-fade-in space-y-8 w-full max-w-5xl mx-auto flex flex-col h-full pt-[60px]">
               <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 text-sm text-purple-900 flex gap-3">
                 <IconUserPlus className="w-5 h-5 shrink-0" />
                 <div>
@@ -527,7 +530,10 @@ export default function GestionCasClient() {
                 </div>
               </div>
 
-              <form onSubmit={onSubmitCrear} className="space-y-8">
+              <form
+                onSubmit={onSubmitCrear}
+                className="space-y-8 flex-1 flex flex-col"
+              >
                 <input type="hidden" name="sistema" value="2" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -587,7 +593,7 @@ export default function GestionCasClient() {
                       </button>
                     </div>
 
-                    <div className="space-y-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-4 max-h-[360px] flex-1 overflow-y-auto pr-2 custom-scrollbar">
                       {nuevosUsuarios.map((usuario, index) => (
                         <div
                           key={index}
@@ -603,19 +609,22 @@ export default function GestionCasClient() {
                                 <input
                                   type="text"
                                   required
-                                  maxLength={10}
+                                  maxLength={6}
                                   placeholder="EJ: JPEREZ"
                                   value={usuario.cuenta}
                                   onChange={(e) => {
                                     const next = [...nuevosUsuarios];
-                                    next[index].cuenta =
-                                      e.target.value.toUpperCase();
+                                    // Remove non-alphanumeric chars and uppercase
+                                    const cleaned = e.target.value
+                                      .replace(/[^A-Za-z0-9]/g, "")
+                                      .toUpperCase();
+                                    next[index].cuenta = cleaned;
                                     setNuevosUsuarios(next);
                                   }}
                                   className="w-full text-sm border border-gray-300 rounded-md p-2 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                 />
                                 <p className="text-[10px] text-gray-500">
-                                  Máximo 10 caracteres.
+                                  Máximo 6 caracteres.
                                 </p>
                               </div>
 
@@ -632,8 +641,11 @@ export default function GestionCasClient() {
                                   value={usuario.nombre}
                                   onChange={(e) => {
                                     const next = [...nuevosUsuarios];
-                                    next[index].nombre =
-                                      e.target.value.toUpperCase();
+                                    // Remove non-alphanumeric and special characters, keep only letters, numbers and spaces
+                                    const cleaned = e.target.value
+                                      .replace(/[^A-Za-z0-9\s]/g, "")
+                                      .toUpperCase();
+                                    next[index].nombre = cleaned;
                                     setNuevosUsuarios(next);
                                   }}
                                   className="w-full text-sm border border-gray-300 rounded-md p-2 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 bg-white"
@@ -662,7 +674,7 @@ export default function GestionCasClient() {
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-gray-100">
+                <div className="flex justify-end pt-4 border-t border-gray-100 mt-auto">
                   <button
                     type="submit"
                     disabled={processing || !selectedBase}
@@ -764,7 +776,7 @@ export default function GestionCasClient() {
           )}
 
           {activeTab === "eliminar" && (
-            <div className="animate-fade-in space-y-8 max-w-4xl mx-auto">
+            <div className="animate-fade-in space-y-8 w-full max-w-5xl mx-auto">
               <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-sm text-red-900 flex gap-3">
                 <IconAlertTriangle className="w-5 h-5 shrink-0 text-red-600" />
                 <div>
@@ -866,27 +878,26 @@ export default function GestionCasClient() {
                     </div>
                   </div>
                 </div>
-
-                <div className="flex justify-end pt-6 border-t border-gray-100">
-                  <button
-                    type="submit"
-                    disabled={processing || !selectedEliminar}
-                    className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                  >
-                    {processing ? (
-                      <>
-                        <IconRefresh className="w-5 h-5 animate-spin" />
-                        Eliminando...
-                      </>
-                    ) : (
-                      <>
-                        <IconTrashX className="w-5 h-5" />
-                        Ejecutar Eliminación
-                      </>
-                    )}
-                  </button>
-                </div>
               </form>
+              <div className="flex justify-end pt-4 border-t border-gray-100">
+                <button
+                  type="submit"
+                  disabled={processing || !selectedEliminar}
+                  className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  {processing ? (
+                    <>
+                      <IconRefresh className="w-5 h-5 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <IconTrashX className="w-5 h-5" />
+                      Ejecutar Eliminación
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>

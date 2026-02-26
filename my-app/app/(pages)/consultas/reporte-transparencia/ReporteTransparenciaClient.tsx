@@ -307,7 +307,7 @@ export default function ReporteTransparenciaClient() {
   };
 
   return (
-    <div className="min-h-screen py-6 max-w-[95%] mx-auto">
+    <div className="min-h-screen py-6 mx-auto">
       {/* titulo pagina */}
       <div className="text-center mb-10">
         <div className="mx-auto h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">

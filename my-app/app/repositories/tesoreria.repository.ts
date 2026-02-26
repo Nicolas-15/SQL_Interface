@@ -279,12 +279,10 @@ export class TesoreriaRepository {
 
     if (todosLosPagos.length === 0) return null;
 
-    // Filter by checking DB if they are actually reversed (Fecha_Pago IS NULL)
     const pool = await connectToDB("comun");
     if (pool) {
       try {
         let validPagos: any[] = [];
-        // Chunk sizes of 500 items max (each takes 2 config params; max is 2100)
         const chunkSize = 500;
         for (let i = 0; i < todosLosPagos.length; i += chunkSize) {
           const chunk = todosLosPagos.slice(i, i + chunkSize);
